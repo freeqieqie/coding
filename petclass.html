@@ -1,0 +1,2016 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>童行宠物园</title>
+	<style>
+		:root {
+			--bg-1: #c8e6cc;
+			--bg-2: #b2d9b8;
+			--panel: rgba(210, 240, 215, 0.90);
+			--panel-strong: rgba(228, 248, 231, 0.96);
+			--ink: #1e3322;
+			--ink-light: #3d6b47;
+			--accent: #3ab87a;
+			--accent-warm: #ff8a5b;
+			--accent-blue: #639fff;
+			--danger: #f25f5c;
+			--gold: #ffcf5a;
+			--shadow: 0 12px 36px rgba(30, 90, 45, 0.15);
+			--shadow-sm: 0 4px 14px rgba(30, 90, 45, 0.10);
+			--radius-xl: 24px;
+			--radius-lg: 16px;
+			--radius-md: 12px;
+			--radius-sm: 8px;
+			--value-dropdown-width: 244px;
+			--ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+		}
+
+		* { box-sizing: border-box; margin: 0; padding: 0; }
+
+		html, body {
+			scrollbar-width: none;
+			-ms-overflow-style: none;
+		}
+		html::-webkit-scrollbar, body::-webkit-scrollbar {
+			width: 0;
+			height: 0;
+		}
+
+		body {
+			min-height: 100vh;
+			font-family: "Trebuchet MS", "Microsoft YaHei", sans-serif;
+			color: var(--ink);
+			background:
+				radial-gradient(circle at 15% 10%, rgba(255,255,255,0.5), transparent 30%),
+				radial-gradient(circle at 85% 90%, rgba(255,255,255,0.35), transparent 25%),
+				linear-gradient(145deg, var(--bg-1), var(--bg-2));
+			overflow-x: hidden;
+		}
+
+		body.auth-locked .page-wrap { filter: blur(12px); pointer-events: none; user-select: none; }
+
+		/* ===== 顶部导航条 ===== */
+		.top-bar {
+			display: flex; align-items: center; justify-content: space-between;
+			padding: 10px 22px; gap: 12px;
+			background: var(--panel-strong);
+			border-bottom: 1px solid rgba(255,255,255,0.5);
+			backdrop-filter: blur(6px);
+		}
+		.top-bar-left { display: flex; align-items: center; gap: 10px; }
+		.logo-icon { font-size: 28px; animation: petBounce 2s ease-in-out infinite; }
+		@keyframes petBounce {
+			0%,100% { transform: translateY(0); }
+			50% { transform: translateY(-4px); }
+		}
+		.top-bar h1 { font-size: 20px; font-weight: 700; color: var(--ink); }
+		.top-bar-right { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-light); }
+		.login-name { font-weight: 600; color: var(--accent); }
+
+		/* ===== 整体布局 ===== */
+		.page-wrap {
+			display: grid;
+			grid-template-columns: 280px minmax(0, 1fr);
+			gap: 14px;
+			padding: 14px;
+			min-height: calc(100vh - 56px);
+		}
+		.sidebar {
+			background: var(--panel);
+			backdrop-filter: blur(8px);
+			border: 1px solid rgba(255,255,255,0.55);
+			border-radius: var(--radius-xl);
+			box-shadow: var(--shadow);
+			padding: 14px;
+			display: flex; flex-direction: column; gap: 10px;
+			overflow-y: auto; max-height: calc(100vh - 84px);
+		}
+		.main-panel {
+			background: var(--panel);
+			backdrop-filter: blur(8px);
+			border: 1px solid rgba(255,255,255,0.55);
+			border-radius: var(--radius-xl);
+			box-shadow: var(--shadow);
+			padding: 18px;
+			overflow-x: hidden;
+			overflow-y: auto; max-height: calc(100vh - 84px);
+			position: relative;
+		}
+		.main-panel {
+			scrollbar-width: none;
+			-ms-overflow-style: none;
+		}
+		.main-panel::-webkit-scrollbar {
+			width: 0;
+			height: 0;
+		}
+
+		/* ===== 通用表单与按钮 ===== */
+		input, select, button { font: inherit; }
+		input, select {
+			padding: 8px 12px; border-radius: var(--radius-sm);
+			border: 1.5px solid rgba(58,184,122,0.35);
+			background: rgba(255,255,255,0.75);
+			outline: none; transition: border-color 0.2s;
+		}
+		input:focus, select:focus { border-color: var(--accent); }
+		.btn {
+			display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+			padding: 8px 16px; border-radius: var(--radius-md);
+			border: none; cursor: pointer; font-weight: 600; font-size: 13px;
+			text-decoration: none;
+			transition: all 0.2s var(--ease-bounce);
+		}
+		.btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+		.btn:active { transform: scale(0.97); }
+		.btn-primary { background: var(--accent); color: #fff; }
+		.btn-primary:hover { background: #2fa36c; }
+		.btn-warm { background: var(--accent-warm); color: #fff; }
+		.btn-warm:hover { background: #e67a4d; }
+		.btn-soft { background: rgba(58,184,122,0.15); color: var(--accent); }
+		.btn-danger { background: var(--danger); color: #fff; }
+		.btn-outline { background: transparent; border: 1.5px solid var(--accent); color: var(--accent); }
+		.btn-sm { padding: 5px 10px; font-size: 12px; border-radius: var(--radius-sm); }
+		.btn[disabled] { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+		/* ===== 侧边栏：班级列表 ===== */
+		.section-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+		.section-title .emoji { font-size: 16px; }
+		.class-list { display: flex; flex-direction: column; gap: 4px; }
+		.class-item {
+			display: flex; align-items: center; gap: 8px;
+			padding: 10px 12px; border-radius: var(--radius-md);
+			cursor: pointer; transition: all 0.2s;
+			background: rgba(255,255,255,0.4);
+			border: 1.5px solid transparent;
+		}
+		.class-item:hover { background: rgba(255,255,255,0.65); }
+		.class-item.active {
+			background: rgba(58,184,122,0.14);
+			border-color: var(--accent);
+			box-shadow: 0 0 0 3px rgba(58,184,122,0.1);
+		}
+		.class-item-icon { font-size: 20px; }
+		.class-item-info { flex: 1; min-width: 0; }
+		.class-item-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+		.class-item-count { font-size: 11px; color: var(--ink-light); }
+		.class-item-actions { display: flex; gap: 2px; }
+		.class-item-actions .btn-sm { padding: 3px 6px; font-size: 11px; opacity: 0.6; }
+		.class-item:hover .class-item-actions .btn-sm { opacity: 1; }
+
+		.add-class-row { display: flex; gap: 6px; }
+		.add-class-row input { flex: 1; min-width: 0; font-size: 13px; }
+
+		/* ===== 主面板：状态栏 ===== */
+		.main-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+		.main-header h2 { font-size: 18px; display: flex; align-items: center; gap: 6px; }
+		.main-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+		/* ===== 空状态 ===== */
+		.empty-state {
+			display: flex; flex-direction: column; align-items: center; justify-content: center;
+			padding: 60px 20px; text-align: center; color: var(--ink-light);
+		}
+		.empty-icon { font-size: 64px; margin-bottom: 12px; animation: petFloat 3s ease-in-out infinite; }
+		@keyframes petFloat {
+			0%,100% { transform: translateY(0) rotate(0deg); }
+			25% { transform: translateY(-8px) rotate(-3deg); }
+			75% { transform: translateY(-4px) rotate(2deg); }
+		}
+		.empty-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+		.empty-hint { font-size: 13px; }
+
+		/* ===== 学生卡片网格 ===== */
+		.student-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+			gap: 14px;
+			overflow: hidden;
+		}
+		.student-card {
+			background: rgba(255,255,255,0.65);
+			border-radius: var(--radius-lg);
+			border: 1.5px solid rgba(58,184,122,0.15);
+			padding: 14px 10px 12px;
+			display: flex; flex-direction: column; align-items: center;
+			text-align: center; gap: 6px;
+			transition: all 0.25s var(--ease-bounce);
+			position: relative;
+			overflow: hidden;
+			cursor: default;
+			touch-action: pan-y;
+			user-select: none;
+			-webkit-user-select: none;
+			--drag-offset: 0px;
+		}
+		.student-card, .student-card * {
+			-webkit-user-drag: none;
+		}
+		.student-card.can-swipe {
+			cursor: pointer;
+		}
+		.student-card.swiping {
+			cursor: pointer;
+		}
+		.student-card.card-pressed {
+			transform: none;
+			box-shadow: 0 8px 24px rgba(30,90,45,0.12);
+			border-color: var(--accent);
+		}
+		.pet-card-stack {
+			position: relative;
+			width: 100%;
+			min-height: 214px;
+		}
+		.pet-card-layer {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 6px;
+			width: 100%;
+		}
+		.pet-current-layer {
+			position: relative;
+			z-index: 2;
+			transform: translateX(var(--drag-offset));
+			transition: transform 0.2s ease, opacity 0.2s ease;
+			will-change: transform;
+		}
+		.pet-preview-layer {
+			position: absolute;
+			inset: 0;
+			z-index: 1;
+			opacity: 0;
+			pointer-events: none;
+			filter: saturate(0.95);
+			transform: translateX(0) scale(1);
+			transition: opacity 0.18s ease;
+		}
+		.student-card.drag-active .pet-current-layer,
+		.student-card.drag-active .pet-preview-layer {
+			transition: none;
+		}
+		.student-card.preview-visible .pet-preview-layer {
+			opacity: 1;
+		}
+		.student-card.preview-next .pet-preview-layer {
+			transform: translateX(0) scale(1);
+		}
+		.student-card.preview-prev .pet-preview-layer {
+			transform: translateX(0) scale(1);
+		}
+		.student-card.drag-settling.preview-next .pet-current-layer {
+			transform: translateX(-155px);
+			opacity: 0.16;
+		}
+		.student-card.drag-settling.preview-prev .pet-current-layer {
+			transform: translateX(155px);
+			opacity: 0.16;
+		}
+		.student-card.drag-settling .pet-preview-layer {
+			opacity: 1;
+		}
+		.student-card-top {
+			width: 100%;
+			display: flex;
+			align-items: flex-start;
+			justify-content: space-between;
+			min-height: 20px;
+			margin-bottom: 2px;
+		}
+		.pet-type-label {
+			font-size: 12px;
+			font-weight: 700;
+			color: #68756f;
+			line-height: 1.2;
+			text-align: left;
+			max-width: calc(100% - 52px);
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		.pet-level-chip {
+			flex-shrink: 0;
+			padding: 3px 10px;
+			border-radius: 999px;
+			background: linear-gradient(135deg, #a485ff, #6e7cf6);
+			color: #fff;
+			font-size: 11px;
+			font-weight: 700;
+			box-shadow: 0 6px 14px rgba(110,124,246,0.24);
+		}
+		.pet-visual {
+			width: 100%;
+			height: 112px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin-bottom: 2px;
+		}
+		.pet-visual img {
+			max-width: 108px;
+			max-height: 108px;
+			width: auto;
+			height: auto;
+			object-fit: contain;
+			transition: transform 0.3s var(--ease-bounce);
+			filter: drop-shadow(0 8px 20px rgba(30,90,45,0.14));
+		}
+		.student-card.card-pressed .pet-visual img { transform: scale(1.08); }
+		.pet-egg-placeholder {
+			font-size: 72px;
+			animation: eggWobble 2.5s ease-in-out infinite;
+		}
+		@keyframes eggWobble {
+			0%,100% { transform: rotate(0deg); }
+			15% { transform: rotate(-8deg); }
+			30% { transform: rotate(6deg); }
+			45% { transform: rotate(-4deg); }
+			60% { transform: rotate(2deg); }
+			75% { transform: rotate(0deg); }
+		}
+		.student-card-name {
+			font-size: 13px; font-weight: 700;
+			max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+		}
+		.pet-stats {
+			width: 100%;
+			display: flex;
+			flex-direction: column;
+			gap: 6px;
+			margin-top: 2px;
+		}
+		.stat-row {
+			width: 100%;
+			display: grid;
+			grid-template-columns: 52px 1fr;
+			align-items: center;
+			gap: 8px;
+		}
+		.stat-text {
+			font-size: 10px;
+			color: var(--ink-light);
+			text-align: left;
+			white-space: nowrap;
+		}
+		.growth-bar-wrap {
+			width: 100%; height: 8px;
+			background: rgba(58,184,122,0.12); border-radius: 4px;
+			overflow: hidden;
+		}
+		.growth-bar {
+			height: 100%; border-radius: 4px;
+			background: linear-gradient(90deg, var(--accent), #6fe0a8);
+			transition: width 0.6s var(--ease-bounce);
+		}
+		.growth-text { font-size: 10px; color: var(--ink-light); }
+		.card-adopt-btn {
+			margin-top: 2px;
+			padding: 5px 14px; border-radius: 20px;
+			background: linear-gradient(135deg, var(--gold), #ffb347);
+			color: #5a4000; font-weight: 700; font-size: 12px;
+			border: none; cursor: pointer;
+			transition: all 0.2s var(--ease-bounce);
+			animation: adoptPulse 2s ease-in-out infinite;
+		}
+		@keyframes adoptPulse {
+			0%,100% { box-shadow: 0 0 0 0 rgba(255,207,90,0.4); }
+			50% { box-shadow: 0 0 0 8px rgba(255,207,90,0); }
+		}
+		.card-adopt-btn:hover { transform: scale(1.06); }
+
+		/* ===== 加分面板 ===== */
+		.growth-panel {
+			margin-top: 16px; padding: 14px 16px;
+			background: rgba(255,255,255,0.55); border-radius: var(--radius-lg);
+			border: 1.5px dashed rgba(58,184,122,0.3);
+			display: none; gap: 10px; flex-wrap: wrap; align-items: center;
+		}
+		.growth-panel.open { display: flex; }
+		.growth-panel label { font-size: 13px; font-weight: 600; }
+		.growth-panel input[type="number"] { width: 80px; }
+		.growth-panel .btn { font-size: 13px; }
+
+		/* ===== 值选择下拉（成长 / 饱腹） ===== */
+		.main-header .main-actions { position: relative; }
+		.value-dropdown {
+			position: absolute; top: 42px; left: 0; width: var(--value-dropdown-width); min-width: var(--value-dropdown-width);
+			background: var(--panel-strong); border: 1px solid rgba(58,184,122,0.12);
+			box-shadow: 0 12px 36px rgba(30,90,45,0.12); border-radius: 12px;
+			padding: 10px; z-index: 600; display: none;
+		}
+		.value-dropdown.open { display: block; }
+		.value-dropdown.mode-satiety { background: linear-gradient(180deg,#d8f0d6,#c3e9c3); border-color: rgba(58,184,122,0.16); }
+		.value-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 8px; }
+		.value-btn {
+			padding: 8px 6px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.06);
+			background: rgba(255,255,255,0.9); cursor: pointer; font-weight:700;
+		}
+		.value-btn.active { background: linear-gradient(90deg,var(--accent),#6fe0a8); color:#fff; }
+		.value-op { display:flex; gap:6px; justify-content:center; }
+		.value-op-btn { padding:6px 10px; border-radius:8px; border:1px solid rgba(0,0,0,0.06); cursor:pointer; }
+		.value-op-btn.active { background: rgba(58,184,122,0.12); border-color: var(--accent); font-weight:700; }
+
+		/* ===== 认证遮罩 ===== */
+		.auth-guard {
+			position: fixed; inset: 0;
+			display: none; align-items: center; justify-content: center;
+			background: rgba(30,60,35,0.45);
+			backdrop-filter: blur(6px);
+			z-index: 1000; padding: 20px;
+		}
+		.auth-guard.open { display: flex; }
+		.auth-guard-card {
+			background: var(--panel-strong);
+			border-radius: var(--radius-xl);
+			padding: 32px 28px; max-width: 380px; width: 100%;
+			box-shadow: var(--shadow);
+			text-align: center;
+		}
+		.auth-guard-card h2 { font-size: 20px; margin-bottom: 4px; }
+		.auth-guard-card .auth-icon { font-size: 48px; margin-bottom: 8px; }
+		.auth-guard-card .subtitle { font-size: 13px; color: var(--ink-light); margin-bottom: 16px; }
+		.auth-guard-card .form-row { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+		.auth-guard-card .form-row input { width: 100%; }
+		.auth-guard-msg { font-size: 12px; min-height: 18px; margin-bottom: 8px; }
+
+		/* ===== 弹窗 ===== */
+		.modal {
+			position: fixed; inset: 0; display: none;
+			align-items: center; justify-content: center;
+			background: rgba(30,60,35,0.4);
+			backdrop-filter: blur(5px);
+			z-index: 900; padding: 20px;
+		}
+		.modal.open { display: flex; }
+		.modal-card {
+			background: var(--panel-strong);
+			border-radius: var(--radius-xl);
+			padding: 24px; max-width: 600px; width: 100%;
+			box-shadow: var(--shadow);
+			max-height: 85vh; overflow-y: auto;
+			animation: modalIn 0.3s var(--ease-bounce);
+		}
+		@keyframes modalIn {
+			from { opacity: 0; transform: scale(0.92) translateY(12px); }
+			to { opacity: 1; transform: scale(1) translateY(0); }
+		}
+		.modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+		.modal-head h3 { font-size: 17px; display: flex; align-items: center; gap: 6px; }
+		.modal-close {
+			width: 30px; height: 30px; border-radius: 50%;
+			background: rgba(0,0,0,0.06); border: none; cursor: pointer;
+			font-size: 16px; display: flex; align-items: center; justify-content: center;
+			transition: background 0.2s;
+		}
+		.modal-close:hover { background: rgba(0,0,0,0.12); }
+
+		/* ===== 搜索学生弹窗 ===== */
+		.search-row { display: flex; gap: 8px; margin-bottom: 12px; }
+		.search-row input { flex: 1; }
+		.candidate-list {
+			max-height: 300px; overflow-y: auto;
+			display: flex; flex-direction: column; gap: 4px;
+		}
+		.candidate-item {
+			display: flex; align-items: center; gap: 8px;
+			padding: 8px 12px; border-radius: var(--radius-sm);
+			border: 1.5px solid transparent;
+			background: rgba(255,255,255,0.5);
+			cursor: pointer; transition: all 0.15s;
+		}
+		.candidate-item:hover { background: rgba(58,184,122,0.08); }
+		.candidate-item.selected {
+			border-color: var(--accent);
+			background: rgba(58,184,122,0.12);
+		}
+		.candidate-item .cand-check {
+			width: 18px; height: 18px; border-radius: 50%;
+			border: 2px solid rgba(58,184,122,0.35);
+			display: flex; align-items: center; justify-content: center;
+			transition: all 0.2s; flex-shrink: 0;
+		}
+		.candidate-item.selected .cand-check {
+			background: var(--accent); border-color: var(--accent); color: #fff; font-size: 11px;
+		}
+		.candidate-item .cand-name { font-weight: 600; font-size: 13px; }
+		.candidate-item .cand-meta { font-size: 11px; color: var(--ink-light); }
+		.search-msg { font-size: 12px; color: var(--ink-light); min-height: 18px; margin-bottom: 6px; }
+		.search-msg.error { color: var(--danger); }
+
+		/* ===== 养宠规则弹窗 ===== */
+		.pet-rules-content {
+			display: flex;
+			flex-direction: column;
+			gap: 14px;
+			font-size: 13px;
+			line-height: 1.7;
+			color: var(--ink);
+		}
+		.pet-rules-block {
+			padding: 14px 16px;
+			border-radius: var(--radius-md);
+			background: rgba(255,255,255,0.56);
+			border: 1px solid rgba(58,184,122,0.12);
+		}
+		.pet-rules-block h4 {
+			margin: 0 0 8px;
+			font-size: 14px;
+		}
+		.pet-rules-list {
+			margin: 0;
+			padding-left: 18px;
+		}
+		.pet-rules-note {
+			font-size: 12px;
+			color: var(--ink-light);
+		}
+
+		/* ===== 领养宠物弹窗 ===== */
+		#adoptModal .modal-card {
+			width: 80vw;
+			max-width: 80vw;
+			max-height: 85vh;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+		.adopt-scroll-shell {
+			margin-top: 8px;
+			flex: 1;
+			min-height: 0;
+			padding-right: 6px;
+			overflow: hidden;
+		}
+		.adopt-scroll-area {
+			height: 100%;
+			max-height: calc(85vh - 170px);
+			overflow-y: auto;
+			overflow-x: hidden;
+			padding-right: 10px;
+			scrollbar-width: none;
+			-ms-overflow-style: none;
+		}
+		.adopt-scroll-area::-webkit-scrollbar {
+			width: 0;
+			height: 0;
+		}
+		.pet-type-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+			gap: 14px; margin: 0;
+		}
+		.pet-type-item {
+			display: flex; flex-direction: column; align-items: center;
+			gap: 8px; padding: 12px 8px; border-radius: var(--radius-md);
+			border: 2px solid transparent;
+			background: rgba(255,255,255,0.42);
+			cursor: pointer; transition: all 0.2s var(--ease-bounce);
+		}
+		.pet-type-item:hover {
+			transform: translateY(-2px);
+			box-shadow: var(--shadow-sm);
+			background: rgba(255,255,255,0.8);
+		}
+		.pet-type-item.selected {
+			border-color: var(--accent);
+			background: rgba(58,184,122,0.1);
+			transform: translateY(-2px);
+		}
+		.pet-type-thumb {
+			width: 100%; height: 120px;
+			overflow: hidden;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		.pet-type-thumb img {
+			max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;
+			transition: transform 0.3s var(--ease-bounce);
+		}
+		.pet-type-item:hover .pet-type-thumb img { transform: scale(1.1) rotate(3deg); }
+		.pet-type-name { font-size: 12px; font-weight: 600; }
+		.adopt-actions {
+			display: flex;
+			justify-content: flex-end;
+			gap: 8px;
+			margin-top: 14px;
+			padding-top: 10px;
+			border-top: 1px solid rgba(58,184,122,0.16);
+			flex-shrink: 0;
+		}
+
+		/* ===== 通知条 ===== */
+		.toast {
+			position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
+			padding: 10px 24px; border-radius: var(--radius-md);
+			background: var(--panel-strong);
+			box-shadow: 0 6px 20px rgba(30,90,45,0.2);
+			font-size: 13px; font-weight: 600;
+			z-index: 2000; pointer-events: none;
+			transition: transform 0.4s var(--ease-bounce), opacity 0.3s;
+			opacity: 0;
+		}
+		.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+		.toast.success { border-left: 4px solid var(--accent); }
+		.toast.error { border-left: 4px solid var(--danger); }
+
+		/* ===== 右键菜单 ===== */
+		.context-menu {
+			position: fixed;
+			z-index: 2500;
+			min-width: 168px;
+			padding: 8px;
+			border-radius: 14px;
+			background: rgba(240, 251, 242, 0.98);
+			border: 1px solid rgba(58,184,122,0.18);
+			box-shadow: 0 14px 36px rgba(30,90,45,0.18);
+			backdrop-filter: blur(10px);
+			opacity: 0;
+			pointer-events: none;
+			transform: translateY(6px) scale(0.98);
+			transition: opacity 0.15s ease, transform 0.15s ease;
+		}
+		.context-menu.open {
+			opacity: 1;
+			pointer-events: auto;
+			transform: translateY(0) scale(1);
+		}
+		.context-menu-title {
+			padding: 4px 8px 8px;
+			font-size: 12px;
+			font-weight: 700;
+			color: #5f6f67;
+			border-bottom: 1px solid rgba(58,184,122,0.14);
+			margin-bottom: 6px;
+		}
+		.context-menu-item {
+			width: 100%;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			padding: 9px 10px;
+			border: none;
+			border-radius: 10px;
+			background: transparent;
+			text-align: left;
+			font-size: 13px;
+			font-weight: 600;
+			color: var(--ink);
+			cursor: pointer;
+			transition: background 0.15s ease, color 0.15s ease;
+		}
+		.context-menu-item:hover {
+			background: rgba(58,184,122,0.12);
+		}
+		.context-menu-item.danger {
+			color: var(--danger);
+		}
+		.context-menu-item.danger:hover {
+			background: rgba(242,95,92,0.12);
+		}
+		.context-menu-item[disabled] {
+			opacity: 0.42;
+			cursor: not-allowed;
+		}
+		.context-menu-item[disabled]:hover {
+			background: transparent;
+		}
+
+		/* ===== 饱腹度 ===== */
+		.satiety-bar-wrap {
+			width: 100%; height: 6px;
+			background: rgba(255,180,55,0.15); border-radius: 3px; overflow: hidden;
+		}
+		.satiety-bar {
+			height: 100%; border-radius: 3px;
+			background: linear-gradient(90deg, var(--gold), #ffe082);
+			transition: width 0.5s var(--ease-bounce);
+		}
+
+		/* ===== 响应式 ===== */
+		@media (max-width: 768px) {
+			.page-wrap { grid-template-columns: 1fr; }
+			.sidebar { max-height: none; }
+			.main-panel { max-height: none; }
+			.student-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+			#adoptModal .modal-card { width: calc(100vw - 24px); max-width: calc(100vw - 24px); }
+			.adopt-scroll-area { max-height: calc(85vh - 190px); }
+			.pet-type-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+		}
+	</style>
+</head>
+<body>
+	<!-- 顶部导航 -->
+	<div class="top-bar">
+		<div class="top-bar-left">
+			<span class="logo-icon">🌿</span>
+			<h1>童行宠物园</h1>
+		</div>
+		<div class="top-bar-right">
+			<a id="petRankBtn" class="btn btn-outline" href="petrank.html">宠物排行</a>
+			<a id="backToChooseBtn" class="btn btn-outline" href="../choose/choose.html">返回</a>
+			<span id="loginText">未登录</span>
+		</div>
+	</div>
+
+	<!-- 认证遮罩 -->
+	<div id="authGuard" class="auth-guard" aria-hidden="true">
+		<div class="auth-guard-card">
+			<div class="auth-icon">🐣</div>
+			<h2>老师登录</h2>
+			<p class="subtitle">请用老师账号登录后管理宠物园</p>
+			<div class="form-row">
+				<input id="authUsername" type="text" placeholder="用户名" autocomplete="off">
+				<input id="authPassword" type="password" placeholder="密码">
+			</div>
+			<div id="authMsg" class="auth-guard-msg"></div>
+			<button id="authLoginBtn" class="btn btn-primary" style="width:100%;">🔑 登录</button>
+		</div>
+	</div>
+
+	<!-- 页面主区域 -->
+	<div class="page-wrap">
+		<!-- 侧边栏 -->
+		<aside class="sidebar">
+			<div class="section-title"><span class="emoji">🏠</span> 我的班级</div>
+			<div id="classList" class="class-list"></div>
+			<div class="add-class-row">
+				<input id="newClassName" type="text" placeholder="新建班级名称..." maxlength="20">
+				<button id="addClassBtn" class="btn btn-primary btn-sm">＋</button>
+			</div>
+		</aside>
+
+		<!-- 主面板 -->
+		<main class="main-panel">
+			<!-- 无班级空状态 -->
+			<div id="emptyState" class="empty-state">
+				<div class="empty-icon">🥚</div>
+				<div class="empty-title">还没有班级哦~</div>
+				<div class="empty-hint">在左侧创建一个班级开始吧！</div>
+			</div>
+
+			<!-- 班级内容区 -->
+			<div id="classContent" style="display:none;">
+				<div class="main-header">
+					<h2><span id="classIcon">🌱</span> <span id="className">—</span></h2>
+					<div class="main-actions">
+						<button id="addStudentBtn" class="btn btn-primary btn-sm">➕ 添加学生</button>
+						<button id="petRulesBtn" class="btn btn-soft btn-sm">📘 养宠规则</button>
+						<button id="growthPanelToggle" class="btn btn-soft btn-sm">⭐ 成长值</button>
+						<button id="satietyToggle" class="btn btn-soft btn-sm">🍖 饱腹值</button>
+						<!-- 值选择下拉（复用） -->
+						<div id="valueDropdown" class="value-dropdown" aria-hidden="true">
+							<div class="value-grid" role="menu" aria-label="选择数值">
+								<button class="value-btn" data-value="1">1</button>
+								<button class="value-btn" data-value="2">2</button>
+								<button class="value-btn" data-value="3">3</button>
+								<button class="value-btn" data-value="4">4</button>
+								<button class="value-btn" data-value="5">5</button>
+								<button class="value-btn" data-value="6">6</button>
+								<button class="value-btn" data-value="7">7</button>
+								<button class="value-btn" data-value="8">8</button>
+								<button class="value-btn" data-value="9">9</button>
+								<button class="value-btn" data-value="10">10</button>
+							</div>
+							<div class="value-op">
+								<button id="valueOpPlus" class="value-op-btn active" data-op="+">+</button>
+								<button id="valueOpMinus" class="value-op-btn" data-op="-">-</button>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- 加分面板 -->
+				<div id="growthPanel" class="growth-panel">
+					<label>🌟 成长值加分</label>
+					<input id="growthAmount" type="number" min="1" max="100" value="5" placeholder="分值">
+					<button id="growthAllBtn" class="btn btn-primary btn-sm">全班加分</button>
+					<span style="font-size:12px;color:var(--ink-light);margin-left:auto;">点击学生卡片可单独加分</span>
+				</div>
+
+				<!-- 学生卡片网格 -->
+				<div id="studentGrid" class="student-grid"></div>
+
+				<!-- 无学生空状态 -->
+				<div id="noStudents" class="empty-state" style="display:none;">
+					<div class="empty-icon">🐾</div>
+					<div class="empty-title">班级里还没有学生</div>
+					<div class="empty-hint">点击「添加学生」搜索并添加吧</div>
+				</div>
+			</div>
+		</main>
+	</div>
+
+	<!-- 添加学生弹窗 -->
+	<div id="addStudentModal" class="modal" aria-hidden="true">
+		<div class="modal-card">
+			<div class="modal-head">
+				<h3>🔍 添加学生</h3>
+				<button class="modal-close" data-close="addStudentModal">✕</button>
+			</div>
+			<div class="search-row">
+				<input id="studentSearchInput" type="text" placeholder="输入学生名称搜索..." autocomplete="off">
+				<button id="studentSearchBtn" class="btn btn-primary btn-sm">搜索</button>
+			</div>
+			<div id="searchMsg" class="search-msg">输入关键字后点击搜索</div>
+			<div id="candidateList" class="candidate-list"></div>
+			<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">
+				<button class="btn btn-outline btn-sm" data-close="addStudentModal">取消</button>
+				<button id="confirmAddBtn" class="btn btn-primary btn-sm" disabled>确认添加选中学生</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- 养宠规则弹窗 -->
+	<div id="petRulesModal" class="modal" aria-hidden="true">
+		<div class="modal-card">
+			<div class="modal-head">
+				<h3>📘 养宠规则</h3>
+				<button class="modal-close" data-close="petRulesModal">✕</button>
+			</div>
+			<div class="pet-rules-content">
+				<div class="pet-rules-block">
+					<h4>🍖 饱腹值自然变化</h4>
+					<ol class="pet-rules-list">
+						<li>饱腹值 100 → 70 时，每小时减少 1.25。</li>
+						<li>饱腹值 70 → 55 时，每小时减少 0.625。</li>
+						<li>饱腹值 55 → 19 时，每小时减少 0.5。</li>
+						<li>饱腹值 19 → 0 时，每小时减少 1。</li>
+					</ol>
+				</div>
+				<div class="pet-rules-block">
+					<h4>⭐ 成长值自然变化</h4>
+					<ol class="pet-rules-list">
+						<li>饱腹值 100 → 70 时，成长值每小时增加 1。</li>
+						<li>饱腹值 70 → 55 时，成长值不增加也不减少。</li>
+						<li>饱腹值 55 → 19 时，成长值每小时减少 1。</li>
+						<li>饱腹值 19 → 0 时，成长值每小时减少 2。</li>
+					</ol>
+				</div>
+				<div class="pet-rules-note">当宠物的饱腹值降到 0 时会死亡。成长值只影响等级变化，不决定死亡；最低只会降到 0 级 0 成长值。</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- 领养宠物弹窗 -->
+	<div id="adoptModal" class="modal" aria-hidden="true">
+		<div class="modal-card">
+			<div class="modal-head">
+				<h3 id="adoptModalTitle">🎉 领养宠物</h3>
+				<button class="modal-close" data-close="adoptModal">✕</button>
+			</div>
+			<p id="adoptInfo" style="font-size:13px;color:var(--ink-light);margin-bottom:4px;"></p>
+			<div class="adopt-scroll-shell">
+				<div class="adopt-scroll-area">
+					<div id="petTypeGrid" class="pet-type-grid"></div>
+				</div>
+			</div>
+			<div class="adopt-actions">
+				<button class="btn btn-outline btn-sm" data-close="adoptModal">取消</button>
+				<button id="confirmAdoptBtn" class="btn btn-warm btn-sm" disabled>🐾 确认领养</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- 通知 -->
+	<div id="toast" class="toast"></div>
+
+	<!-- 学生卡片右键菜单 -->
+	<div id="studentContextMenu" class="context-menu" aria-hidden="true">
+		<div id="studentContextMenuTitle" class="context-menu-title">学生操作</div>
+		<button class="context-menu-item" data-menu-action="change-pet">🔄 更换宠物</button>
+		<button class="context-menu-item" data-menu-action="add-pet">➕ 添加宠物</button>
+		<button class="context-menu-item danger" data-menu-action="remove-student">🗑 删除学生</button>
+	</div>
+
+	<script>
+	(function() {
+		'use strict';
+
+		const LOGIN_KEY = 'loggedInUser';
+		const PET_GARDEN_TEACHER_KEY = 'petgarden_teacher_v1';
+
+		// ===== State =====
+		const state = {
+			teacher: null,
+			classes: [],
+			activeClassId: null,
+			students: [],
+			petTypes: [],
+			contextMenuStudentId: null,
+			growthPanelOpen: false,
+			suppressClickUntil: 0,
+			switchingStudentId: null,
+			swipeGesture: null,
+			// add student modal
+			searchCandidates: [],
+			selectedCandidates: new Set(),
+			searchLoading: false,
+			// adopt modal
+			adoptStudentId: null,
+			adoptSelectedType: null,
+			adoptMode: 'adopt',
+			adoptTargetPetId: null
+			// value dropdown (growth / satiety)
+			,valueDropdown: { open: false, mode: null, amount: 1, op: '+' }
+		};
+
+		// ===== DOM Refs =====
+		const $ = id => document.getElementById(id);
+		const els = {
+			authGuard: $('authGuard'),
+			authUsername: $('authUsername'),
+			authPassword: $('authPassword'),
+			authMsg: $('authMsg'),
+			authLoginBtn: $('authLoginBtn'),
+			loginText: $('loginText'),
+			classList: $('classList'),
+			newClassName: $('newClassName'),
+			addClassBtn: $('addClassBtn'),
+			emptyState: $('emptyState'),
+			classContent: $('classContent'),
+			classIcon: $('classIcon'),
+			className: $('className'),
+			addStudentBtn: $('addStudentBtn'),
+			petRulesBtn: $('petRulesBtn'),
+			growthPanelToggle: $('growthPanelToggle'),
+			growthPanel: $('growthPanel'),
+			growthAmount: $('growthAmount'),
+			growthAllBtn: $('growthAllBtn'),
+			studentGrid: $('studentGrid'),
+			noStudents: $('noStudents'),
+			// add student modal
+			addStudentModal: $('addStudentModal'),
+			petRulesModal: $('petRulesModal'),
+			studentSearchInput: $('studentSearchInput'),
+			studentSearchBtn: $('studentSearchBtn'),
+			searchMsg: $('searchMsg'),
+			candidateList: $('candidateList'),
+			confirmAddBtn: $('confirmAddBtn'),
+			// adopt modal
+			adoptModal: $('adoptModal'),
+			adoptModalTitle: $('adoptModalTitle'),
+			adoptInfo: $('adoptInfo'),
+			petTypeGrid: $('petTypeGrid'),
+			confirmAdoptBtn: $('confirmAdoptBtn'),
+			valueDropdown: $('valueDropdown'),
+			valueOpPlus: null,
+			valueOpMinus: null,
+			satietyToggle: null,
+			studentContextMenu: $('studentContextMenu'),
+			studentContextMenuTitle: $('studentContextMenuTitle'),
+			// toast
+			toast: $('toast')
+		};
+
+		// initialize dynamic refs
+		els.valueOpPlus = $('valueOpPlus');
+		els.valueOpMinus = $('valueOpMinus');
+		els.satietyToggle = $('satietyToggle');
+		// ===== Utils =====
+		function getDeviceId() {
+			// use the shared 'deviceId' key so sessions in choose.html and petclass.html
+			// use the same device id and won't kick each other when logged in from same browser
+			let id = localStorage.getItem('deviceId');
+			if (!id) {
+				id = 'dev-' + Math.random().toString(36).slice(2, 18) + '-' + Date.now();
+				localStorage.setItem('deviceId', id);
+			}
+			return id;
+		}
+
+		async function postJson(url, body) {
+			const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+			const d = await r.json().catch(() => ({}));
+			if (!r.ok) throw new Error(d.error || '请求失败');
+			return d;
+		}
+
+		async function getJson(url) {
+			const r = await fetch(url);
+			const d = await r.json().catch(() => ({}));
+			if (!r.ok) throw new Error(d.error || '请求失败');
+			return d;
+		}
+
+		function escapeHtml(s) {
+			const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+		}
+
+		function getStudentById(studentId) {
+			return state.students.find(student => student.id === studentId) || null;
+		}
+
+		function getStudentCurrentPet(student) {
+			if (!student) return null;
+			const pets = Array.isArray(student.pets) ? student.pets : [];
+			const currentPet = pets.find(pet => pet.id === student.current_pet_id);
+			if (currentPet) return currentPet;
+			if (!student.pet_type) return null;
+			return {
+				id: student.current_pet_id || null,
+				pet_type: student.pet_type,
+				pet_type_name: student.pet_type_name || '',
+				level: student.level || 0,
+				growth_value: student.growth_value || 0,
+				satiety: student.satiety || 0,
+				max_growth_value: student.max_growth_value || 40,
+				pet_image: student.pet_image || ''
+			};
+		}
+
+		function formatSatietyDisplay(value) {
+			const numericValue = Number(value);
+			if (!Number.isFinite(numericValue)) return '0.0';
+			return numericValue.toFixed(1);
+		}
+
+		function formatGrowthDisplay(value) {
+			const numericValue = Number(value);
+			if (!Number.isFinite(numericValue)) return '0';
+			return Number.isInteger(numericValue) ? String(numericValue) : numericValue.toFixed(1);
+		}
+
+		function renderPetVisual(pet, petTypeName) {
+			if (pet && pet.pet_image) {
+				return `<img src="/${escapeHtml(pet.pet_image)}" alt="${escapeHtml(petTypeName)}" draggable="false" onerror="this.parentElement.innerHTML='<span class=pet-egg-placeholder>🐾</span>'">`;
+			}
+			return `<span class="pet-egg-placeholder">🥚</span>`;
+		}
+
+		function renderPetCardLayer(student, pet, allowAdoptButton) {
+			const hasPet = !!(pet && pet.pet_type);
+			const petTypeName = hasPet ? pet.pet_type_name || (state.petTypes.find(t => t.id === pet.pet_type) || {}).name || '' : '';
+			const growthValue = hasPet ? Number(pet.growth_value) || 0 : 0;
+			const maxGrowthValue = hasPet ? Math.max(1, Number(pet.max_growth_value) || 40) : 40;
+			const pct = hasPet ? Math.min(100, Math.round((growthValue / maxGrowthValue) * 100)) : 0;
+			const satietyValue = hasPet ? Number(pet.satiety) || 0 : 0;
+			const satPct = hasPet ? Math.min(100, Math.max(0, satietyValue)) : 0;
+			return `
+				<div class="student-card-top">
+					<div class="pet-type-label">${hasPet ? escapeHtml(petTypeName) : '宠物蛋'}</div>
+					${hasPet ? `<div class="pet-level-chip">Lv.${pet.level || 0}</div>` : ''}
+				</div>
+				<div class="pet-visual">${renderPetVisual(pet, petTypeName)}</div>
+				<div class="student-card-name" title="${escapeHtml(student.name)}">${escapeHtml(student.name)}</div>
+				${hasPet ? `
+					<div class="pet-stats">
+						<div class="stat-row">
+							<div class="stat-text">${formatGrowthDisplay(growthValue)}/${formatGrowthDisplay(maxGrowthValue)}</div>
+							<div class="growth-bar-wrap"><div class="growth-bar" style="width:${pct}%"></div></div>
+						</div>
+						<div class="stat-row">
+							<div class="stat-text">${formatSatietyDisplay(satietyValue)}/100</div>
+							<div class="satiety-bar-wrap"><div class="satiety-bar" style="width:${satPct}%"></div></div>
+						</div>
+					</div>
+				` : allowAdoptButton ? `
+					<button class="card-adopt-btn" data-action="adopt" data-sid="${student.id}">🎁 领养宠物</button>
+				` : ''}
+			`;
+		}
+
+		function renderStudentCard(student) {
+			const pets = Array.isArray(student.pets) ? student.pets : [];
+			const currentPet = getStudentCurrentPet(student);
+			return `
+			<div class="student-card ${pets.length > 1 ? 'can-swipe' : ''}" data-sid="${student.id}">
+				<div class="pet-card-stack">
+					<div class="pet-preview-layer"></div>
+					<div class="pet-card-layer pet-current-layer">${renderPetCardLayer(student, currentPet, true)}</div>
+				</div>
+			</div>`;
+		}
+
+		function applyStudentPetState(studentId, petState) {
+			const currentStudent = getStudentById(studentId);
+			if (!currentStudent || !petState) return null;
+			const currentPet = petState.current_pet || null;
+			const updatedStudent = {
+				...currentStudent,
+				current_pet_id: petState.current_pet_id,
+				pet_count: petState.pet_count,
+				can_add_pet: petState.can_add_pet,
+				pets: Array.isArray(petState.pets) ? petState.pets : [],
+				pet_id: currentPet ? currentPet.id : null,
+				pet_type: currentPet ? currentPet.pet_type : null,
+				pet_type_name: currentPet ? currentPet.pet_type_name : '',
+				pet_name: currentPet ? currentPet.pet_name : null,
+				level: currentPet ? currentPet.level : 0,
+				growth_value: currentPet ? currentPet.growth_value : 0,
+				satiety: currentPet ? currentPet.satiety : 100,
+				adopted_at: currentPet ? currentPet.adopted_at : null,
+				max_growth_value: currentPet ? currentPet.max_growth_value : 40,
+				pet_image: currentPet ? currentPet.pet_image : 'games/petgarden/petegg.png'
+			};
+			state.students = state.students.map(student => student.id === studentId ? updatedStudent : student);
+			return updatedStudent;
+		}
+
+		function replaceStudentCard(student) {
+			const card = els.studentGrid.querySelector(`.student-card[data-sid="${student.id}"]`);
+			if (!card) return;
+			card.outerHTML = renderStudentCard(student);
+		}
+
+		function getSwipeTargetPet(studentId, direction) {
+			const student = getStudentById(studentId);
+			const pets = student && Array.isArray(student.pets) ? student.pets : [];
+			if (!student || pets.length < 2) return null;
+			const currentIndex = pets.findIndex(pet => pet.id === student.current_pet_id);
+			const safeIndex = currentIndex >= 0 ? currentIndex : 0;
+			const nextIndex = (safeIndex + direction + pets.length) % pets.length;
+			return pets[nextIndex] || null;
+		}
+
+		function clearCardDragState(card, settle = false) {
+			if (!card) return;
+			card.classList.remove('drag-active', 'preview-visible', 'preview-next', 'preview-prev', 'drag-settling', 'swiping');
+			if (!settle) card.style.removeProperty('--drag-offset');
+			delete card.dataset.previewPetId;
+			const preview = card.querySelector('.pet-preview-layer');
+			if (preview) preview.innerHTML = '';
+		}
+
+		function updateCardDragPreview(card, studentId, deltaX) {
+			if (!card) return;
+			const preview = card.querySelector('.pet-preview-layer');
+			if (!preview) return;
+			const absDelta = Math.abs(deltaX);
+			if (absDelta < 10) {
+				card.style.setProperty('--drag-offset', '0px');
+				card.classList.remove('drag-active', 'preview-visible', 'preview-next', 'preview-prev');
+				delete card.dataset.previewPetId;
+				preview.innerHTML = '';
+				return;
+			}
+			const direction = deltaX < 0 ? 1 : -1;
+			const targetPet = getSwipeTargetPet(studentId, direction);
+			if (!targetPet) {
+				clearCardDragState(card);
+				return;
+			}
+			const dragOffset = Math.max(-128, Math.min(128, deltaX));
+			card.style.setProperty('--drag-offset', `${dragOffset}px`);
+			card.classList.add('drag-active', 'preview-visible');
+			card.classList.toggle('preview-next', direction === 1);
+			card.classList.toggle('preview-prev', direction === -1);
+			if (card.dataset.previewPetId !== String(targetPet.id)) {
+				const student = getStudentById(studentId);
+				preview.innerHTML = targetPet && student ? `<div class="pet-card-layer">${renderPetCardLayer(student, targetPet, false)}</div>` : '';
+				card.dataset.previewPetId = String(targetPet.id);
+			}
+		}
+
+		async function ensurePetTypesLoaded() {
+			if (state.petTypes.length > 0) return state.petTypes;
+			const res = await getJson('/api/petgarden/pet/types');
+			state.petTypes = res.types || [];
+			return state.petTypes;
+		}
+
+		let toastTimer = null;
+		function showToast(msg, type = 'success') {
+			if (toastTimer) clearTimeout(toastTimer);
+			els.toast.textContent = msg;
+			els.toast.className = 'toast ' + type;
+			requestAnimationFrame(() => els.toast.classList.add('show'));
+			toastTimer = setTimeout(() => { els.toast.classList.remove('show'); }, 2600);
+		}
+
+		function showQueuedToasts(messages, type = 'error') {
+			const items = Array.isArray(messages) ? messages.filter(Boolean) : [];
+			if (items.length === 0) return;
+			const leadDelay = els.toast.classList.contains('show') ? 2800 : 0;
+			items.forEach((message, index) => {
+				setTimeout(() => showToast(message, type), leadDelay + index * 2900);
+			});
+		}
+
+		function showPetDeathEvents(events) {
+			if (!Array.isArray(events) || events.length === 0) return;
+			const messages = events.map(event => event && event.message ? event.message : '').filter(Boolean);
+			showQueuedToasts(messages, 'error');
+		}
+
+		function hideStudentContextMenu() {
+			state.contextMenuStudentId = null;
+			els.studentContextMenu.classList.remove('open');
+			els.studentContextMenu.setAttribute('aria-hidden', 'true');
+		}
+
+		function showStudentContextMenu(student, clientX, clientY) {
+			if (!student) return;
+			state.contextMenuStudentId = student.id;
+			els.studentContextMenuTitle.textContent = student.name + ' · 宠物操作';
+
+			const changePetButton = els.studentContextMenu.querySelector('[data-menu-action="change-pet"]');
+			const addPetButton = els.studentContextMenu.querySelector('[data-menu-action="add-pet"]');
+			changePetButton.disabled = !student.pet_type || Number(student.level || 0) >= 5;
+			addPetButton.disabled = !student.can_add_pet;
+
+			els.studentContextMenu.style.left = '0px';
+			els.studentContextMenu.style.top = '0px';
+			els.studentContextMenu.classList.add('open');
+			els.studentContextMenu.setAttribute('aria-hidden', 'false');
+
+			const rect = els.studentContextMenu.getBoundingClientRect();
+			const safeLeft = Math.min(clientX, window.innerWidth - rect.width - 10);
+			const safeTop = Math.min(clientY, window.innerHeight - rect.height - 10);
+			els.studentContextMenu.style.left = Math.max(10, safeLeft) + 'px';
+			els.studentContextMenu.style.top = Math.max(10, safeTop) + 'px';
+		}
+
+		// ===== Auth =====
+		function setAuthMsg(msg, isError = true) {
+			els.authMsg.textContent = msg;
+			els.authMsg.style.color = isError ? 'var(--danger)' : 'var(--accent)';
+		}
+
+		function lockForAuth(msg) {
+			document.body.classList.add('auth-locked');
+			els.authGuard.classList.add('open');
+			els.authGuard.setAttribute('aria-hidden', 'false');
+			setAuthMsg(msg || '请登录老师账号', true);
+			setTimeout(() => els.authUsername.focus(), 60);
+		}
+
+		function unlockAuth() {
+			document.body.classList.remove('auth-locked');
+			els.authGuard.classList.remove('open');
+			els.authGuard.setAttribute('aria-hidden', 'true');
+			els.authPassword.value = '';
+			updateLoginText();
+		}
+
+		function updateLoginText() {
+			els.loginText.innerHTML = state.teacher
+				? '👤 <span class="login-name">' + escapeHtml(state.teacher.username) + '</span>'
+				: '未登录';
+		}
+
+		function getSavedTeacher() {
+			try { return JSON.parse(localStorage.getItem(PET_GARDEN_TEACHER_KEY)); } catch { return null; }
+		}
+
+		function saveTeacher(u) {
+			if (u) localStorage.setItem(PET_GARDEN_TEACHER_KEY, JSON.stringify(u));
+			else localStorage.removeItem(PET_GARDEN_TEACHER_KEY);
+		}
+
+		async function handleLogin() {
+			const username = els.authUsername.value.trim();
+			const password = els.authPassword.value.trim();
+			if (!username || !password) { setAuthMsg('请输入用户名和密码'); return; }
+			els.authLoginBtn.disabled = true;
+			setAuthMsg('正在验证...', false);
+			try {
+				const res = await postJson('/api/choose/teacher-login', { username, password, deviceId: getDeviceId() });
+				const user = { ...res.user, password };
+				state.teacher = user;
+				saveTeacher(user);
+				unlockAuth();
+				showToast('🎉 登录成功！欢迎 ' + username);
+				loadClasses();
+			} catch (e) {
+				setAuthMsg(e.message || '登录失败');
+			} finally {
+				els.authLoginBtn.disabled = false;
+			}
+		}
+
+		async function validateSavedLogin() {
+			const saved = getSavedTeacher();
+			if (!saved || !saved.username) { lockForAuth(); return; }
+			try {
+				const res = await postJson('/api/choose/teacher-validate', {
+					username: saved.username,
+					source: saved.source || null,
+					deviceId: saved.deviceId || getDeviceId()
+				});
+				state.teacher = { ...saved, ...res.user };
+				saveTeacher(state.teacher);
+				unlockAuth();
+				loadClasses();
+			} catch {
+				saveTeacher(null);
+				lockForAuth('登录已过期，请重新登录');
+			}
+		}
+
+		// ===== Classes =====
+		async function loadClasses() {
+			if (!state.teacher) return;
+			try {
+				const res = await getJson('/api/petgarden/class/list?owner_username=' + encodeURIComponent(state.teacher.username));
+				state.classes = res.classes || [];
+				renderClassList();
+				if (state.classes.length > 0) {
+					const savedId = state.activeClassId;
+					if (savedId && state.classes.find(c => c.id === savedId)) {
+						setActiveClass(savedId);
+					} else {
+						setActiveClass(state.classes[0].id);
+					}
+				} else {
+					state.activeClassId = null;
+					renderMainPanel();
+				}
+			} catch (e) {
+				showToast('加载班级失败: ' + e.message, 'error');
+			}
+		}
+
+		function renderClassList() {
+			const html = state.classes.map(c => `
+				<div class="class-item ${c.id === state.activeClassId ? 'active' : ''}" data-cid="${c.id}">
+					<span class="class-item-icon">🌿</span>
+					<div class="class-item-info">
+						<div class="class-item-name">${escapeHtml(c.name)}</div>
+						<div class="class-item-count">${c.student_count || 0} 位同学</div>
+					</div>
+					<div class="class-item-actions">
+						<button class="btn btn-sm btn-soft" data-action="rename-class" data-cid="${c.id}" title="重命名">✏️</button>
+						<button class="btn btn-sm btn-danger" data-action="delete-class" data-cid="${c.id}" title="删除" style="font-size:10px;">🗑</button>
+					</div>
+				</div>
+			`).join('');
+			els.classList.innerHTML = html;
+		}
+
+		async function addClass() {
+			const name = els.newClassName.value.trim();
+			if (!name) return;
+			try {
+				await postJson('/api/petgarden/class/create', { owner_username: state.teacher.username, name });
+				els.newClassName.value = '';
+				showToast('🌱 班级创建成功！');
+				await loadClasses();
+			} catch (e) {
+				showToast('创建失败: ' + e.message, 'error');
+			}
+		}
+
+		async function renameClass(id) {
+			const cls = state.classes.find(c => c.id === id);
+			if (!cls) return;
+			const newName = prompt('请输入新班级名称：', cls.name);
+			if (!newName || newName.trim() === cls.name) return;
+			try {
+				await postJson('/api/petgarden/class/update', { id, owner_username: state.teacher.username, name: newName.trim() });
+				showToast('已更新班级名称');
+				await loadClasses();
+			} catch (e) {
+				showToast('重命名失败: ' + e.message, 'error');
+			}
+		}
+
+		async function deleteClass(id) {
+			const cls = state.classes.find(c => c.id === id);
+			if (!cls) return;
+			if (!confirm(`确定要删除班级「${cls.name}」吗？\n所有学生和宠物数据也会被删除。`)) return;
+			try {
+				await postJson('/api/petgarden/class/delete', { id, owner_username: state.teacher.username });
+				showToast('班级已删除');
+				if (state.activeClassId === id) state.activeClassId = null;
+				await loadClasses();
+			} catch (e) {
+				showToast('删除失败: ' + e.message, 'error');
+			}
+		}
+
+		function setActiveClass(id) {
+			state.activeClassId = id;
+			renderClassList();
+			loadStudents();
+		}
+
+		// ===== Students =====
+		async function loadStudents() {
+			if (!state.activeClassId) { state.students = []; renderMainPanel(); return; }
+			try {
+				await ensurePetTypesLoaded();
+				const res = await getJson('/api/petgarden/class/students?class_id=' + state.activeClassId);
+				state.students = res.students || [];
+				renderMainPanel();
+				showPetDeathEvents(res.death_events);
+			} catch (e) {
+				showToast('加载学生失败: ' + e.message, 'error');
+			}
+		}
+
+		function renderMainPanel() {
+			const hasClass = state.activeClassId != null;
+			els.emptyState.style.display = hasClass ? 'none' : '';
+			els.classContent.style.display = hasClass ? '' : 'none';
+			if (!hasClass) return;
+
+			const cls = state.classes.find(c => c.id === state.activeClassId);
+			els.className.textContent = cls ? cls.name : '—';
+
+			const hasStudents = state.students.length > 0;
+			els.studentGrid.style.display = hasStudents ? '' : 'none';
+			els.noStudents.style.display = hasStudents ? 'none' : '';
+
+			if (hasStudents) renderStudentCards();
+		}
+
+		function renderStudentCards() {
+			els.studentGrid.innerHTML = state.students.map(renderStudentCard).join('');
+		}
+
+		async function removeStudent(sid) {
+			hideStudentContextMenu();
+			const s = state.students.find(x => x.id === sid);
+			if (!s) return;
+			if (!confirm(`确定移除「${s.name}」吗？宠物数据也会丢失。\n（不会影响学生账号本身）`)) return;
+			try {
+				await postJson('/api/petgarden/student/remove', { id: sid });
+				showToast('已移除 ' + s.name);
+				await loadStudents();
+				await loadClasses();
+			} catch (e) {
+				showToast('移除失败: ' + e.message, 'error');
+			}
+		}
+
+		async function switchCurrentPet(studentId, direction) {
+			const student = getStudentById(studentId);
+			const pets = student && Array.isArray(student.pets) ? student.pets : [];
+			if (!student || pets.length < 2 || state.switchingStudentId === studentId) return;
+			const currentIndex = pets.findIndex(pet => pet.id === student.current_pet_id);
+			const safeIndex = currentIndex >= 0 ? currentIndex : 0;
+			const nextIndex = (safeIndex + direction + pets.length) % pets.length;
+			const nextPet = pets[nextIndex];
+			if (!nextPet || nextPet.id === student.current_pet_id) return;
+
+			state.switchingStudentId = studentId;
+			state.suppressClickUntil = Date.now() + 280;
+			try {
+				const res = await postJson('/api/petgarden/pet/set-current', { student_id: studentId, pet_id: nextPet.id });
+				const updatedStudent = applyStudentPetState(studentId, res.pet_state);
+				if (updatedStudent) replaceStudentCard(updatedStudent);
+				showToast(`已切换到 ${student.name} 的${nextPet.pet_type_name || '宠物'}`);
+			} catch (e) {
+				const card = els.studentGrid.querySelector(`.student-card[data-sid="${studentId}"]`);
+				clearCardDragState(card);
+				showToast('切换宠物失败: ' + e.message, 'error');
+			} finally {
+				state.switchingStudentId = null;
+			}
+		}
+
+		// ===== Growth panel =====
+		function toggleGrowthPanel() {
+			state.growthPanelOpen = !state.growthPanelOpen;
+			els.growthPanel.classList.toggle('open', state.growthPanelOpen);
+		}
+
+		async function addGrowthAll() {
+			const amount = parseInt(els.growthAmount.value) || 0;
+			if (amount <= 0) { showToast('请输入有效分值', 'error'); return; }
+			const sids = state.students.filter(s => s.pet_type).map(s => s.id);
+			if (sids.length === 0) { showToast('没有已领养宠物的学生', 'error'); return; }
+			try {
+				await postJson('/api/petgarden/pet/batch-add-growth', { student_ids: sids, amount });
+				showToast(`🌟 全班 +${amount} 成长值！`);
+				await loadStudents();
+			} catch (e) {
+				showToast('加分失败: ' + e.message, 'error');
+			}
+		}
+
+		async function addGrowthSingle(sid) {
+			const amount = parseInt(els.growthAmount.value) || 0;
+			if (amount <= 0) { showToast('请先设置分值', 'error'); return; }
+			const s = state.students.find(x => x.id === sid);
+			if (!s || !s.pet_type) { showToast('该学生尚未领养宠物', 'error'); return; }
+			try {
+				const res = await postJson('/api/petgarden/pet/add-growth', { student_id: sid, amount });
+				showToast(`🌟 ${s.name} +${amount}${res.level > s.level ? ' 升级啦！🎉' : ''}`);
+				await loadStudents();
+			} catch (e) {
+				showToast('加分失败: ' + e.message, 'error');
+			}
+		}
+
+		// Apply selected value (growth or satiety) to a single student
+		async function applyValueToStudent(studentId) {
+			if (!state.valueDropdown.open || !state.valueDropdown.mode) return;
+			const amount = Number(state.valueDropdown.amount) || 0;
+			if (amount <= 0) { showToast('请选择一个有效数值', 'error'); return; }
+			const op = state.valueDropdown.op === '+' ? 1 : -1;
+			const s = getStudentById(studentId);
+			if (!s || !s.pet_type) { showToast('该学生尚未领养宠物', 'error'); return; }
+			const currentPet = getStudentCurrentPet(s);
+			const petLabel = (currentPet && (currentPet.pet_name || currentPet.pet_type_name)) || s.pet_name || s.pet_type_name || '宠物';
+			try {
+				if (state.valueDropdown.mode === 'growth') {
+					await postJson('/api/petgarden/pet/add-growth', { student_id: studentId, amount: op * amount });
+					showToast(`${petLabel} 的成长值 ${op>0? '增加' : '减少'} ${amount}`);
+				} else if (state.valueDropdown.mode === 'satiety') {
+					// server endpoint assumed: /api/petgarden/pet/add-satiety
+					await postJson('/api/petgarden/pet/add-satiety', { student_id: studentId, amount: op * amount });
+					showToast(`${petLabel} 的饱腹值 ${op>0? '增加' : '减少'} ${amount}`);
+				}
+				await loadStudents();
+			} catch (e) {
+				showToast('操作失败: ' + e.message, 'error');
+			}
+		}
+
+		function openValueDropdown(mode, anchorEl) {
+			state.valueDropdown.mode = mode;
+			state.valueDropdown.open = true;
+			els.valueDropdown.classList.add('open');
+			els.valueDropdown.setAttribute('aria-hidden', 'false');
+			// position near anchor (relative to parent .main-actions)
+			if (anchorEl && anchorEl.getBoundingClientRect) {
+				const panelPadding = 18;
+				const fallbackWidth = 244;
+				const rect = anchorEl.getBoundingClientRect();
+				const parentRect = els.valueDropdown.parentElement.getBoundingClientRect();
+				const mainPanel = anchorEl.closest('.main-panel') || document.querySelector('.main-panel');
+				const panelRect = mainPanel ? mainPanel.getBoundingClientRect() : parentRect;
+				const relativeLeft = rect.left - parentRect.left;
+				// try to center under the button if space allows
+				const dropdownWidth = els.valueDropdown.offsetWidth || fallbackWidth;
+				const desiredLeft = relativeLeft + Math.round((anchorEl.offsetWidth - dropdownWidth) / 2);
+				const minLeft = Math.max(6, panelRect.left - parentRect.left + panelPadding);
+				const maxLeft = panelRect.right - parentRect.left - dropdownWidth - panelPadding;
+				const clampedLeft = Math.min(Math.max(minLeft, desiredLeft), Math.max(minLeft, maxLeft));
+				els.valueDropdown.style.left = clampedLeft + 'px';
+			}
+			// apply mode class so satiety can have different styling
+			els.valueDropdown.classList.toggle('mode-satiety', mode === 'satiety');
+			// ensure op buttons active state
+			document.querySelectorAll('.value-btn').forEach(b => b.classList.toggle('active', Number(b.dataset.value) === Number(state.valueDropdown.amount)));
+			document.querySelectorAll('.value-op-btn').forEach(b => b.classList.toggle('active', b.dataset.op === state.valueDropdown.op));
+		}
+
+		function closeValueDropdown() {
+			state.valueDropdown.open = false;
+			state.valueDropdown.mode = null;
+			els.valueDropdown.classList.remove('open');
+			els.valueDropdown.setAttribute('aria-hidden', 'true');
+			// cleanup any mode-specific class
+			els.valueDropdown.classList.remove('mode-satiety');
+		}
+
+		function toggleValueDropdown(mode, anchorEl) {
+			if (state.valueDropdown.open && state.valueDropdown.mode === mode) {
+				closeValueDropdown();
+				return;
+			}
+			openValueDropdown(mode, anchorEl);
+		}
+
+		// value button and op clicks (delegated)
+		document.addEventListener('click', e => {
+			const vb = e.target.closest('.value-btn');
+			if (vb && els.valueDropdown && els.valueDropdown.contains(vb)) {
+				state.valueDropdown.amount = Number(vb.dataset.value);
+				document.querySelectorAll('.value-btn').forEach(b => b.classList.toggle('active', b === vb));
+				return; // do not close
+			}
+			const opb = e.target.closest('.value-op-btn');
+			if (opb && els.valueDropdown && els.valueDropdown.contains(opb)) {
+				state.valueDropdown.op = opb.dataset.op;
+				document.querySelectorAll('.value-op-btn').forEach(b => b.classList.toggle('active', b === opb));
+				return;
+			}
+			// outside click: close dropdown unless clicking a student card or the toggles
+			const isClickOnCard = !!e.target.closest('.student-card');
+			const isClickOnToggle = !!e.target.closest('#growthPanelToggle') || !!e.target.closest('#satietyToggle');
+			if (!isClickOnCard && !els.valueDropdown.contains(e.target) && !isClickOnToggle) {
+				closeValueDropdown();
+			}
+		});
+
+		// ===== Add Student Modal =====
+		function openAddStudentModal() {
+			state.searchCandidates = [];
+			state.selectedCandidates = new Set();
+			els.studentSearchInput.value = '';
+			els.candidateList.innerHTML = '';
+			els.searchMsg.textContent = '输入关键字后点击搜索';
+			els.searchMsg.className = 'search-msg';
+			els.confirmAddBtn.disabled = true;
+			openModal('addStudentModal');
+			setTimeout(() => els.studentSearchInput.focus(), 60);
+		}
+
+		function openPetRulesModal() {
+			openModal('petRulesModal');
+		}
+
+		async function searchCandidates() {
+			const kw = els.studentSearchInput.value.trim();
+			if (!kw) { els.searchMsg.textContent = '请输入搜索关键字'; return; }
+			state.searchLoading = true;
+			els.searchMsg.textContent = '搜索中...';
+			els.searchMsg.className = 'search-msg';
+			try {
+				const res = await postJson('/api/petgarden/student/search-candidates', {
+					owner_username: state.teacher.username,
+					keyword: kw
+				});
+				state.searchCandidates = res.candidates || [];
+				state.selectedCandidates = new Set();
+				if (state.searchCandidates.length === 0) {
+					els.searchMsg.textContent = '没有找到匹配的学生';
+				} else {
+					els.searchMsg.textContent = `找到 ${state.searchCandidates.length} 位学生，点击选择后添加`;
+				}
+				renderCandidateList();
+			} catch (e) {
+				els.searchMsg.textContent = e.message || '搜索失败';
+				els.searchMsg.className = 'search-msg error';
+			} finally {
+				state.searchLoading = false;
+			}
+		}
+
+		function getCandidateKey(c) { return c.username + '|' + c.type; }
+
+		function renderCandidateList() {
+			// Mark already-in-class students
+			const existingKeys = new Set(state.students.map(s => (s.linked_username || '') + '|' + (s.linked_type || '')));
+			els.candidateList.innerHTML = state.searchCandidates.map(c => {
+				const key = getCandidateKey(c);
+				const alreadyIn = existingKeys.has(key);
+				const selected = state.selectedCandidates.has(key);
+				const typeLabel = c.type === 'permanent' ? '永久' : '注册';
+				return `
+				<div class="candidate-item ${selected ? 'selected' : ''} ${alreadyIn ? '' : ''}"
+					 data-key="${escapeHtml(key)}" ${alreadyIn ? 'style="opacity:0.45;pointer-events:none;"' : ''}>
+					<div class="cand-check">${selected ? '✓' : (alreadyIn ? '—' : '')}</div>
+					<div>
+						<div class="cand-name">${escapeHtml(c.username)}</div>
+						<div class="cand-meta">${typeLabel} ${c.grade_stu ? '· ' + escapeHtml(c.grade_stu) : ''} ${alreadyIn ? '<b style="color:var(--accent)">已在班级中</b>' : ''}</div>
+					</div>
+				</div>`;
+			}).join('');
+			els.confirmAddBtn.disabled = state.selectedCandidates.size === 0;
+		}
+
+		function toggleCandidate(key) {
+			if (state.selectedCandidates.has(key)) {
+				state.selectedCandidates.delete(key);
+			} else {
+				state.selectedCandidates.add(key);
+			}
+			renderCandidateList();
+		}
+
+		async function confirmAddStudents() {
+			if (state.selectedCandidates.size === 0) return;
+			const students = [];
+			for (const key of state.selectedCandidates) {
+				const [username, type] = key.split('|');
+				students.push({ username, type });
+			}
+			els.confirmAddBtn.disabled = true;
+			try {
+				const res = await postJson('/api/petgarden/student/batch-add', {
+					class_id: state.activeClassId,
+					students
+				});
+				const addedCount = (res.added || []).length;
+				const skippedCount = (res.skipped || []).length;
+				let msg = `✅ 已添加 ${addedCount} 位学生`;
+				if (skippedCount > 0) msg += `，跳过 ${skippedCount} 位(已存在)`;
+				showToast(msg);
+				closeModal('addStudentModal');
+				await loadStudents();
+				await loadClasses();
+			} catch (e) {
+				showToast('添加失败: ' + e.message, 'error');
+				els.confirmAddBtn.disabled = false;
+			}
+		}
+
+		// ===== Adopt Modal =====
+		async function openAdoptModal(studentId, mode = 'adopt') {
+			state.adoptStudentId = studentId;
+			state.adoptSelectedType = null;
+			state.adoptMode = mode;
+			const s = state.students.find(x => x.id === studentId);
+			state.adoptTargetPetId = mode === 'change' && s ? s.current_pet_id : null;
+			if (mode === 'change') {
+				els.adoptModalTitle.textContent = '🔄 更换宠物';
+				els.adoptInfo.textContent = s ? `为 ${s.name} 重新选择一只宠物，当前宠物会被替换并重置为宠物蛋。` : '';
+				els.confirmAdoptBtn.textContent = '🔄 确认更换';
+			} else if (mode === 'add') {
+				els.adoptModalTitle.textContent = '✨ 添加宠物';
+				els.adoptInfo.textContent = s ? `为 ${s.name} 再添加一只新宠物吧！添加后会自动切换为新宠物。` : '';
+				els.confirmAdoptBtn.textContent = '✨ 确认添加';
+			} else {
+				els.adoptModalTitle.textContent = '🎉 领养宠物';
+				els.adoptInfo.textContent = s ? `为 ${s.name} 选择一只宠物吧！` : '';
+				els.confirmAdoptBtn.textContent = '🐾 确认领养';
+			}
+			els.confirmAdoptBtn.disabled = true;
+
+			if (state.petTypes.length === 0) {
+				try {
+					await ensurePetTypesLoaded();
+				} catch (e) {
+					showToast('加载宠物类型失败', 'error');
+					return;
+				}
+			}
+			renderPetTypeGrid();
+			openModal('adoptModal');
+		}
+
+		async function openChangePetFlow(studentId) {
+			const student = getStudentById(studentId);
+			if (!student || !student.pet_type) {
+				showToast('该学生当前没有可更换的宠物', 'error');
+				return;
+			}
+			if (Number(student.level || 0) >= 5) {
+				showToast('5级和5级以上的宠物不支持更换', 'error');
+				return;
+			}
+			const currentPetName = student.pet_type_name || '当前宠物';
+			if (!confirm(`确定要为 ${student.name} 更换宠物吗？\n当前的${currentPetName}会被替换，等级与成长值会重置。`)) return;
+			await openAdoptModal(studentId, 'change');
+		}
+
+		async function openAddPetFlow(studentId) {
+			const student = getStudentById(studentId);
+			if (!student) return;
+			if (!student.can_add_pet) {
+				showToast('只有当该学生现有的所有宠物都达到 5 级及以上时，才可以添加新宠物', 'error');
+				return;
+			}
+			await openAdoptModal(studentId, 'add');
+		}
+
+		function renderPetTypeGrid() {
+			els.petTypeGrid.innerHTML = state.petTypes.map(t => {
+				const imgPath = `/games/petgarden/pets/${t.folder}/${t.folder}01.png`;
+				return `
+				<div class="pet-type-item ${state.adoptSelectedType === t.id ? 'selected' : ''}" data-pettype="${t.id}">
+					<div class="pet-type-thumb">
+						<img src="${imgPath}" alt="${escapeHtml(t.name)}" onerror="this.parentElement.innerHTML='🐾'">
+					</div>
+					<div class="pet-type-name">${escapeHtml(t.name)}</div>
+				</div>`;
+			}).join('');
+		}
+
+		function selectPetType(typeId) {
+			state.adoptSelectedType = typeId;
+			renderPetTypeGrid();
+			els.confirmAdoptBtn.disabled = !typeId;
+		}
+
+		async function confirmAdopt() {
+			if (!state.adoptStudentId || !state.adoptSelectedType) return;
+			els.confirmAdoptBtn.disabled = true;
+			try {
+				if (state.adoptMode === 'change') {
+					await postJson('/api/petgarden/pet/change-type', {
+						student_id: state.adoptStudentId,
+						pet_id: state.adoptTargetPetId,
+						pet_type: state.adoptSelectedType
+					});
+				} else if (state.adoptMode === 'add') {
+					await postJson('/api/petgarden/pet/add-pet', {
+						student_id: state.adoptStudentId,
+						pet_type: state.adoptSelectedType
+					});
+				} else {
+					await postJson('/api/petgarden/pet/adopt', {
+						student_id: state.adoptStudentId,
+						pet_type: state.adoptSelectedType
+					});
+				}
+				const typeName = (state.petTypes.find(t => t.id === state.adoptSelectedType) || {}).name || '';
+				if (state.adoptMode === 'change') {
+					showToast(`🔄 已更换为${typeName}！`);
+				} else if (state.adoptMode === 'add') {
+					showToast(`✨ 已新增${typeName}！`);
+				} else {
+					showToast(`🎉 成功领养了${typeName}！`);
+				}
+				closeModal('adoptModal');
+				await loadStudents();
+			} catch (e) {
+				const actionLabel = state.adoptMode === 'change' ? '更换' : (state.adoptMode === 'add' ? '添加' : '领养');
+				showToast(actionLabel + '失败: ' + e.message, 'error');
+				els.confirmAdoptBtn.disabled = false;
+			}
+		}
+
+		// ===== Modal Helpers =====
+		function openModal(id) {
+			hideStudentContextMenu();
+			const el = $(id);
+			el.classList.add('open');
+			el.setAttribute('aria-hidden', 'false');
+		}
+		function closeModal(id) {
+			const el = $(id);
+			el.classList.remove('open');
+			el.setAttribute('aria-hidden', 'true');
+		}
+
+		// ===== Event Binding =====
+		// Auth
+		els.authLoginBtn.addEventListener('click', handleLogin);
+		els.authUsername.addEventListener('keydown', e => { if (e.key === 'Enter') els.authPassword.focus(); });
+		els.authPassword.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+
+		// Class management
+		els.addClassBtn.addEventListener('click', addClass);
+		els.newClassName.addEventListener('keydown', e => { if (e.key === 'Enter') addClass(); });
+		els.petRulesBtn.addEventListener('click', openPetRulesModal);
+		els.classList.addEventListener('click', e => {
+			const target = e.target.closest('[data-action]');
+			if (target) {
+				const action = target.dataset.action;
+				const cid = Number(target.dataset.cid);
+				if (action === 'rename-class') renameClass(cid);
+				else if (action === 'delete-class') deleteClass(cid);
+				e.stopPropagation();
+				return;
+			}
+			const item = e.target.closest('.class-item');
+			if (item) setActiveClass(Number(item.dataset.cid));
+		});
+
+		// Student management
+		els.addStudentBtn.addEventListener('click', openAddStudentModal);
+		// growth button now opens persistent dropdown
+		els.growthPanelToggle.addEventListener('click', e => toggleValueDropdown('growth', e.currentTarget));
+		// satiety button (new)
+		if (els.satietyToggle) els.satietyToggle.addEventListener('click', e => toggleValueDropdown('satiety', e.currentTarget));
+		els.growthAllBtn.addEventListener('click', addGrowthAll);
+
+		// Student grid clicks
+		els.studentGrid.addEventListener('click', e => {
+			if (Date.now() < state.suppressClickUntil) return;
+			hideStudentContextMenu();
+			const adoptBtn = e.target.closest('[data-action="adopt"]');
+			if (adoptBtn) { openAdoptModal(Number(adoptBtn.dataset.sid)); return; }
+			const card = e.target.closest('.student-card');
+			if (card && !adoptBtn) {
+				const sid = Number(card.dataset.sid);
+				if (state.valueDropdown && state.valueDropdown.open) {
+					// apply configured value to this student's pet
+					applyValueToStudent(sid);
+					return;
+				}
+				// Growth panel single-click fallback (legacy)
+				if (state.growthPanelOpen) {
+					addGrowthSingle(sid);
+				}
+			}
+		});
+
+		// Add student modal
+		els.studentSearchBtn.addEventListener('click', searchCandidates);
+		els.studentSearchInput.addEventListener('keydown', e => { if (e.key === 'Enter') searchCandidates(); });
+		els.candidateList.addEventListener('click', e => {
+			const item = e.target.closest('.candidate-item');
+			if (item && !item.style.pointerEvents) toggleCandidate(item.dataset.key);
+		});
+		els.confirmAddBtn.addEventListener('click', confirmAddStudents);
+
+		// Adopt modal
+		els.petTypeGrid.addEventListener('click', e => {
+			const item = e.target.closest('.pet-type-item');
+			if (item) selectPetType(item.dataset.pettype);
+		});
+		els.confirmAdoptBtn.addEventListener('click', confirmAdopt);
+
+		els.studentGrid.addEventListener('dragstart', e => {
+			if (e.target.closest('.student-card')) e.preventDefault();
+		});
+		els.studentGrid.addEventListener('selectstart', e => {
+			if (e.target.closest('.student-card')) e.preventDefault();
+		});
+
+		els.studentGrid.addEventListener('pointerdown', e => {
+			if (e.button !== 0) return;
+			if (e.target.closest('[data-action="adopt"]')) return;
+			const anyCard = e.target.closest('.student-card');
+			if (anyCard) anyCard.classList.add('card-pressed');
+			const card = e.target.closest('.student-card.can-swipe');
+			if (!card) return;
+			state.swipeGesture = {
+				studentId: Number(card.dataset.sid),
+				startX: e.clientX,
+				startY: e.clientY,
+				card,
+				moved: false
+			};
+			card.classList.add('swiping');
+		});
+
+		document.addEventListener('pointermove', e => {
+			const gesture = state.swipeGesture;
+			if (!gesture) return;
+			const deltaX = e.clientX - gesture.startX;
+			const deltaY = e.clientY - gesture.startY;
+			if (Math.abs(deltaX) <= Math.abs(deltaY) && Math.abs(deltaX) < 10) return;
+			gesture.moved = gesture.moved || Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10;
+			updateCardDragPreview(gesture.card, gesture.studentId, deltaX);
+		});
+
+		document.addEventListener('pointerup', e => {
+			document.querySelectorAll('.student-card.card-pressed').forEach(card => {
+				setTimeout(() => card.classList.remove('card-pressed'), 120);
+			});
+			const gesture = state.swipeGesture;
+			if (!gesture) return;
+			state.swipeGesture = null;
+			const deltaX = e.clientX - gesture.startX;
+			const deltaY = e.clientY - gesture.startY;
+			if (gesture.moved) state.suppressClickUntil = Date.now() + 180;
+			if (Math.abs(deltaX) < 42 || Math.abs(deltaX) <= Math.abs(deltaY)) {
+				clearCardDragState(gesture.card);
+				return;
+			}
+			const direction = deltaX < 0 ? 1 : -1;
+			gesture.card.classList.add('drag-settling');
+			setTimeout(() => {
+				switchCurrentPet(gesture.studentId, direction);
+			}, 140);
+		});
+
+		document.addEventListener('pointercancel', () => {
+			document.querySelectorAll('.student-card.card-pressed').forEach(card => card.classList.remove('card-pressed'));
+			if (!state.swipeGesture) return;
+			clearCardDragState(state.swipeGesture.card);
+			state.swipeGesture = null;
+		});
+
+		// Disable browser context menu everywhere, show custom menu on student cards only.
+		document.addEventListener('contextmenu', e => {
+			e.preventDefault();
+			const card = e.target.closest('.student-card');
+			if (!card) {
+				hideStudentContextMenu();
+				return;
+			}
+			const student = state.students.find(item => item.id === Number(card.dataset.sid));
+			showStudentContextMenu(student, e.clientX, e.clientY);
+		});
+
+		els.studentContextMenu.addEventListener('click', e => {
+			const button = e.target.closest('[data-menu-action]');
+			if (!button || button.disabled) return;
+			const student = state.students.find(item => item.id === state.contextMenuStudentId);
+			if (!student) {
+				hideStudentContextMenu();
+				return;
+			}
+			const action = button.dataset.menuAction;
+			hideStudentContextMenu();
+			if (action === 'remove-student') {
+				removeStudent(student.id);
+				return;
+			}
+			if (action === 'change-pet') {
+				openChangePetFlow(student.id);
+				return;
+			}
+			if (action === 'add-pet') {
+				openAddPetFlow(student.id);
+				return;
+			}
+		});
+
+		document.addEventListener('click', e => {
+			if (!e.target.closest('#studentContextMenu')) hideStudentContextMenu();
+		});
+		window.addEventListener('scroll', hideStudentContextMenu, true);
+		window.addEventListener('resize', hideStudentContextMenu);
+		document.addEventListener('keydown', e => { if (e.key === 'Escape') hideStudentContextMenu(); });
+
+		// Modal close buttons
+		document.querySelectorAll('[data-close]').forEach(btn => {
+			btn.addEventListener('click', () => closeModal(btn.dataset.close));
+		});
+		// Click backdrop to close
+		document.querySelectorAll('.modal').forEach(modal => {
+			modal.addEventListener('click', e => {
+				if (e.target === modal) closeModal(modal.id);
+			});
+		});
+
+		// ===== Init =====
+		validateSavedLogin();
+
+	})();
+	</script>
+</body>
+</html>
