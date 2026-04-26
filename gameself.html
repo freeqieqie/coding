@@ -1,0 +1,3454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>个人中心</title>
+	<style>
+		:root {
+			--bg: #e8f5e9;
+			--bg-card: linear-gradient(180deg, rgba(232,245,233,0.98), rgba(200,230,201,0.96));
+			--text: #2e3a2f;
+			--text-muted: rgba(46,58,47,0.62);
+			--border: rgba(76,175,80,0.18);
+			--accent: #43a047;
+			--accent-light: #a5d6a7;
+			--btn-primary-bg: linear-gradient(135deg, #66bb6a, #43a047);
+			--btn-primary-hover: linear-gradient(135deg, #81c784, #4caf50);
+			--shadow: rgba(56,120,60,0.12);
+			--radius: 18px;
+		}
+
+		* {
+			box-sizing: border-box;
+			margin: 0;
+		}
+
+		body {
+			font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+			background: var(--bg);
+			color: var(--text);
+			min-height: 100vh;
+			padding: 0;
+		}
+
+		/* ========== Title Bar ========== */
+		.title-bar {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 14px 24px;
+			background: linear-gradient(135deg, #388e3c, #43a047);
+			color: #fff;
+			box-shadow: 0 4px 16px var(--shadow);
+			position: sticky;
+			top: 0;
+			z-index: 20;
+		}
+
+		.title-bar h1 {
+			font-size: 20px;
+			font-weight: 700;
+			letter-spacing: 0.5px;
+		}
+
+		.title-bar-right {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			font-size: 14px;
+		}
+
+		.user-info {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			opacity: 0.92;
+		}
+
+		.user-info .username {
+			font-weight: 600;
+		}
+
+		.user-info .userid {
+			opacity: 0.78;
+			font-size: 12px;
+		}
+
+		/* ========== Buttons ========== */
+		.btn {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: 6px;
+			padding: 8px 18px;
+			border: none;
+			border-radius: 999px;
+			font-size: 14px;
+			font-weight: 600;
+			cursor: pointer;
+			transition: all 0.15s;
+		}
+
+		.btn-login {
+			background: rgba(255,255,255,0.92);
+			color: #2e7d32;
+		}
+
+		.btn-login:hover {
+			background: #fff;
+		}
+
+		.btn-logout {
+			background: rgba(255,255,255,0.18);
+			color: #fff;
+			border: 1px solid rgba(255,255,255,0.38);
+		}
+
+		.btn-logout:hover {
+			background: rgba(255,255,255,0.28);
+		}
+
+		.btn-primary {
+			background: var(--btn-primary-bg);
+			color: #fff;
+			box-shadow: 0 4px 12px rgba(67,160,71,0.28);
+		}
+
+		.btn-primary:hover {
+			background: var(--btn-primary-hover);
+		}
+
+		.btn-outline {
+			background: rgba(255,255,255,0.72);
+			color: var(--accent);
+			border: 1.5px solid var(--accent-light);
+		}
+
+		.btn-outline:hover {
+			background: rgba(255,255,255,0.92);
+		}
+
+		.btn-soft {
+			background: rgba(76,175,80,0.10);
+			color: var(--accent);
+		}
+
+		.btn-dress {
+			background: linear-gradient(135deg, #ffe39d, #ffc56f);
+			color: #6b4318;
+			box-shadow: 0 4px 12px rgba(255,184,92,0.22);
+			font-size: 15px;
+			padding: 10px 26px;
+		}
+
+		.btn-dress:hover {
+			filter: brightness(1.05);
+		}
+
+		/* ========== Main Layout ========== */
+		.main-content {
+			max-width: 1360px;
+			margin: 28px auto;
+			padding: 0 20px;
+		}
+
+		.profile-layout {
+			display: grid;
+			grid-template-columns: 300px minmax(0, 1fr);
+			gap: 22px;
+			align-items: start;
+		}
+
+		/* ========== Top Cards Row (avatar + pet side by side on mobile) ========== */
+		.top-cards-row {
+			display: flex;
+			flex-direction: column;
+			gap: 18px;
+		}
+
+		/* ========== Left: Avatar Panel ========== */
+		.avatar-panel {
+			background: var(--bg-card);
+			border-radius: var(--radius);
+			border: 1px solid var(--border);
+			padding: 24px 20px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 16px;
+			box-shadow: 0 8px 24px var(--shadow);
+		}
+
+		/* ========== Pet Card Panel ========== */
+		.pet-card-panel {
+			background: var(--bg-card);
+			border-radius: var(--radius);
+			border: 1px solid var(--border);
+			padding: 18px 14px 14px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 8px;
+			box-shadow: 0 8px 24px var(--shadow);
+			position: relative;
+			overflow: hidden;
+			touch-action: pan-y;
+			user-select: none;
+			-webkit-user-select: none;
+			--drag-offset: 0px;
+		}
+		.pet-card-panel,
+		.pet-card-panel * {
+			-webkit-user-drag: none;
+		}
+		.pet-card-panel.can-swipe {
+			cursor: pointer;
+		}
+		.pet-card-panel.swiping {
+			cursor: pointer;
+		}
+		.pet-card-panel.card-pressed {
+			transform: none;
+			box-shadow: 0 8px 24px var(--shadow);
+		}
+		.pet-card-stack {
+			position: relative;
+			width: 100%;
+			min-height: 214px;
+		}
+		.pet-card-layer {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 8px;
+			width: 100%;
+			min-height: 214px;
+		}
+		.pet-current-layer {
+			position: relative;
+			z-index: 2;
+			transform: translateX(var(--drag-offset));
+			transition: transform 0.2s ease, opacity 0.2s ease;
+			will-change: transform;
+		}
+		.pet-preview-layer {
+			position: absolute;
+			inset: 0;
+			z-index: 1;
+			opacity: 0;
+			pointer-events: none;
+			filter: saturate(0.95);
+			transform: translateX(0) scale(1);
+			transition: opacity 0.18s ease;
+		}
+		.pet-card-panel.drag-active .pet-current-layer,
+		.pet-card-panel.drag-active .pet-preview-layer {
+			transition: none;
+		}
+		.pet-card-panel.preview-visible .pet-preview-layer {
+			opacity: 1;
+		}
+		.pet-card-panel.drag-settling.preview-next .pet-current-layer {
+			transform: translateX(-155px);
+			opacity: 0.16;
+		}
+		.pet-card-panel.drag-settling.preview-prev .pet-current-layer {
+			transform: translateX(155px);
+			opacity: 0.16;
+		}
+		.pet-card-panel.drag-settling .pet-preview-layer {
+			opacity: 1;
+		}
+		.pet-dots { display: flex; gap: 6px; justify-content: center; margin-top: 8px; }
+		.pet-dots span { width: 8px; height: 8px; border-radius: 999px; background: rgba(46,58,47,0.18); display: inline-block; }
+		.pet-dots span.active { background: rgba(46,58,47,0.72); }
+		.pet-card-panel .pet-card-top {
+			width: 100%;
+			display: flex;
+			align-items: flex-start;
+			justify-content: space-between;
+			min-height: 20px;
+			margin-bottom: 2px;
+		}
+		.pet-card-panel .pet-type-label {
+			font-size: 12px;
+			font-weight: 700;
+			color: rgba(46,58,47,0.62);
+			line-height: 1.2;
+			text-align: left;
+			max-width: calc(100% - 58px);
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		.pet-card-panel .pet-level-chip {
+			flex-shrink: 0;
+			padding: 3px 10px;
+			border-radius: 999px;
+			background: linear-gradient(135deg, #a485ff, #6e7cf6);
+			color: #fff;
+			font-size: 11px;
+			font-weight: 700;
+			box-shadow: 0 6px 14px rgba(110,124,246,0.24);
+		}
+		.pet-card-panel .pet-visual {
+			width: 100%;
+			height: 112px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin-bottom: 2px;
+		}
+		.pet-card-panel .pet-visual img {
+			max-width: 108px;
+			max-height: 108px;
+			width: auto;
+			height: auto;
+			object-fit: contain;
+			transition: transform 0.3s ease;
+			filter: drop-shadow(0 8px 20px rgba(30,90,45,0.14));
+		}
+		.pet-card-panel .pet-actions {
+			width: 100%;
+			display: flex;
+			justify-content: center;
+			margin-top: 12px;
+			order: 4;
+		}
+		.pet-card-panel .pet-actions .feed-btn {
+			/* match avatar-panel .btn-dress sizing */
+			padding: 10px 26px;
+			font-size: 15px;
+			background: linear-gradient(135deg, #ffe39d, #ffc56f);
+			color: #6b4318;
+			box-shadow: 0 4px 12px rgba(255,184,92,0.22);
+			border-radius: 12px;
+		}
+		.pet-card-panel.card-pressed .pet-visual img {
+			transform: scale(1.08);
+		}
+		.pet-card-panel .pet-egg-placeholder {
+			font-size: 64px;
+		}
+		.pet-card-panel .pet-stats {
+			width: 100%;
+			display: flex;
+			flex-direction: column;
+			gap: 6px;
+			margin-top: 2px;
+		}
+		.pet-card-panel .pet-stat-row {
+			width: 100%;
+			display: grid;
+			grid-template-columns: 52px 1fr;
+			align-items: center;
+			gap: 8px;
+		}
+		.pet-card-panel .pet-stat-text {
+			font-size: 10px;
+			color: rgba(46,58,47,0.62);
+			text-align: left;
+			white-space: nowrap;
+		}
+		.pet-card-panel .growth-bar-wrap {
+			width: 100%; height: 8px;
+			background: rgba(76,175,80,0.12); border-radius: 4px;
+			overflow: hidden;
+		}
+		.pet-card-panel .growth-bar {
+			height: 100%; border-radius: 4px;
+			background: linear-gradient(90deg, #43a047, #6fe0a8);
+		}
+		.pet-card-panel .satiety-bar-wrap {
+			width: 100%; height: 6px;
+			background: rgba(255,180,55,0.15); border-radius: 3px;
+			overflow: hidden;
+		}
+		.pet-card-panel .satiety-bar {
+			height: 100%; border-radius: 3px;
+			background: linear-gradient(90deg, #ffcf5a, #ffe082);
+		}
+		.pet-card-panel .pet-no-data {
+			font-size: 13px;
+			color: var(--text-muted);
+			text-align: center;
+			padding: 30px 0;
+		}
+
+		.avatar-stage {
+			width: 100%;
+			height: 240px;
+			border-radius: 16px;
+			background:
+				radial-gradient(circle at top, rgba(255,255,255,0.75), transparent 48%),
+				linear-gradient(180deg, rgba(190,236,200,0.95), rgba(163,220,178,0.95));
+			border: 1px solid rgba(255,255,255,0.8);
+			display: flex;
+			align-items: flex-start;
+			justify-content: center;
+			padding-top: 16px;
+			position: relative;
+			overflow: hidden;
+		}
+
+		.avatar-stage::after {
+			content: "";
+			position: absolute;
+			left: 12%;
+			right: 12%;
+			bottom: -36px;
+			height: 72px;
+			background: radial-gradient(circle at center, rgba(72,173,95,0.62), rgba(72,173,95,0));
+		}
+
+		.avatar-stage .avatar-wrap {
+			width: 120px;
+			height: 210px;
+			margin-top: 0;
+			display: flex;
+			align-items: flex-start;
+			justify-content: center;
+		}
+
+		.avatar-stage .avatar-body {
+			inset: auto;
+			left: 50%;
+			top: 0;
+			width: 80px;
+			height: 126px;
+			transform: translateX(-50%) scale(1.45);
+			transform-origin: center top;
+		}
+
+		.avatar-summary-text {
+			font-size: 13px;
+			opacity: 0.72;
+			text-align: center;
+		}
+
+		.no-data-hint {
+			font-size: 14px;
+			color: var(--text-muted);
+			text-align: center;
+			padding: 20px 0;
+		}
+
+		/* ========== Right: Activity Panel ========== */
+		.activity-panel {
+			display: flex;
+			flex-direction: column;
+			gap: 18px;
+		}
+
+		/* Snack cards grid: 3 per row on desktop, no stretching */
+		.snack-cards-grid {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 14px;
+			align-items: flex-start;
+		}
+
+		.snack-cards-grid .activity-card {
+			flex: 0 0 calc((100% - 28px) / 3);
+		}
+
+		.activity-card {
+			background: var(--bg-card);
+			border-radius: var(--radius);
+			border: 1px solid var(--border);
+			padding: 14px 18px;
+			box-shadow: 0 8px 24px var(--shadow);
+		}
+
+		.activity-card-title {
+			font-size: 16px;
+			font-weight: 700;
+			margin-bottom: 10px;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.activity-card-title .icon {
+			font-size: 18px;
+		}
+
+		.stat-row {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			padding: 8px 0;
+		}
+
+		.stat-row + .stat-row {
+			border-top: 1px solid rgba(76,175,80,0.10);
+		}
+
+		.stat-icon {
+			width: 40px;
+			height: 40px;
+			border-radius: 10px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 20px;
+			flex-shrink: 0;
+		}
+
+		.stat-icon.candy {
+			background: linear-gradient(135deg, #fff9c4, #ffe082);
+		}
+
+		.stat-icon.petfood {
+			background: linear-gradient(135deg, #e8f5e9, #a5d6a7);
+		}
+
+		.stat-info {
+			flex: 1;
+		}
+
+		.stat-label {
+			font-size: 13px;
+			opacity: 0.64;
+		}
+
+		.stat-value {
+			font-size: 22px;
+			font-weight: 700;
+			color: var(--accent);
+			line-height: 1.2;
+		}
+
+		.stat-unit {
+			font-size: 14px;
+			font-weight: 400;
+			opacity: 0.6;
+			margin-left: 4px;
+		}
+
+		/* ========== Login Prompt ========== */
+		.login-prompt {
+			text-align: center;
+			padding: 60px 20px;
+		}
+
+		.login-prompt h2 {
+			font-size: 22px;
+			margin-bottom: 12px;
+		}
+
+		.login-prompt p {
+			color: var(--text-muted);
+			margin-bottom: 24px;
+		}
+
+		/* ========== Login Modal ========== */
+		.modal {
+			position: fixed;
+			inset: 0;
+			display: none;
+			align-items: center;
+			justify-content: center;
+			padding: 20px;
+			background: rgba(46,58,47,0.32);
+			backdrop-filter: blur(10px);
+			z-index: 30;
+			overflow-y: auto;
+			overscroll-behavior: contain;
+		}
+
+		.modal.open {
+			display: flex;
+		}
+
+		.modal-card {
+			width: min(100%, 420px);
+			background: var(--bg-card);
+			border-radius: 28px;
+			padding: 28px;
+			border: 1px solid rgba(255,255,255,0.9);
+			box-shadow: 0 26px 50px var(--shadow);
+		}
+
+		.modal-head {
+			display: flex;
+			align-items: flex-start;
+			justify-content: space-between;
+			gap: 12px;
+			margin-bottom: 18px;
+		}
+
+		.modal-head h2 {
+			margin: 0;
+			font-size: 22px;
+		}
+
+		.modal-close {
+			width: 42px;
+			height: 42px;
+			padding: 0;
+			border-radius: 50%;
+			font-size: 22px;
+			line-height: 1;
+			background: rgba(76,175,80,0.10);
+			color: var(--text);
+			border: none;
+			cursor: pointer;
+		}
+
+		.form-row {
+			margin-bottom: 14px;
+		}
+
+		.form-row label {
+			display: block;
+			font-size: 13px;
+			font-weight: 600;
+			margin-bottom: 6px;
+			opacity: 0.76;
+		}
+
+		.form-row input {
+			width: 100%;
+			padding: 10px 14px;
+			border-radius: 12px;
+			border: 1.5px solid var(--border);
+			background: rgba(255,255,255,0.72);
+			font-size: 15px;
+			outline: none;
+			transition: border-color 0.15s;
+		}
+
+		.form-row input:focus {
+			border-color: var(--accent);
+		}
+
+		.login-error {
+			color: #c62828;
+			font-size: 13px;
+			margin-bottom: 10px;
+			min-height: 20px;
+		}
+
+		.login-actions {
+			display: flex;
+			gap: 10px;
+			margin-top: 6px;
+		}
+
+		/* ========== Dress Modal (same as choose.html) ========== */
+		.dress-modal-card {
+			width: min(100%, 960px);
+			max-height: calc(100vh - 40px);
+			overflow-y: auto;
+			overscroll-behavior: contain;
+			scrollbar-width: none;
+			-ms-overflow-style: none;
+		}
+
+		.dress-modal-card::-webkit-scrollbar {
+			display: none;
+		}
+
+		.dress-layout {
+			display: grid;
+			grid-template-columns: 280px minmax(0, 1fr);
+			gap: 18px;
+		}
+
+		.dress-preview-panel {
+			background: linear-gradient(180deg, rgba(239,249,241,0.96), rgba(223,244,228,0.96));
+			border-radius: 22px;
+			padding: 18px 16px;
+			border: 1px solid rgba(120,190,135,0.24);
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 12px;
+		}
+
+		.dress-preview-stage {
+			width: 100%;
+			height: 250px;
+			border-radius: 18px;
+			background:
+				radial-gradient(circle at top, rgba(255,255,255,0.75), transparent 48%),
+				linear-gradient(180deg, rgba(190,236,200,0.95), rgba(163,220,178,0.95));
+			border: 1px solid rgba(255,255,255,0.8);
+			display: flex;
+			align-items: flex-start;
+			justify-content: center;
+			padding-top: 16px;
+			position: relative;
+			overflow: hidden;
+		}
+
+		.dress-preview-stage::after {
+			content: "";
+			position: absolute;
+			left: 12%;
+			right: 12%;
+			bottom: -36px;
+			height: 72px;
+			background: radial-gradient(circle at center, rgba(72,173,95,0.62), rgba(72,173,95,0));
+		}
+
+		.dress-preview-stage .avatar-wrap {
+			width: 120px;
+			height: 210px;
+			margin-top: 0;
+			display: flex;
+			align-items: flex-start;
+			justify-content: center;
+		}
+
+		.dress-preview-stage .avatar-body {
+			inset: auto;
+			left: 50%;
+			top: 0;
+			width: 80px;
+			height: 126px;
+			transform: translateX(-50%) scale(1.45);
+			transform-origin: center top;
+		}
+
+		.dress-preview-name {
+			font-size: 18px;
+			font-weight: bold;
+		}
+
+		.dress-preview-summary {
+			font-size: 13px;
+			opacity: 0.76;
+			text-align: center;
+		}
+
+		.dress-quick-actions,
+		.dress-actions {
+			display: flex;
+			gap: 10px;
+			flex-wrap: wrap;
+		}
+
+		.dress-cost-note {
+			align-self: center;
+			font-size: 13px;
+			color: var(--text-muted);
+			margin-left: 6px;
+		}
+
+		.dress-controls {
+			display: flex;
+			flex-direction: column;
+			gap: 14px;
+		}
+
+		.dress-form-grid {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 12px;
+		}
+
+		.dress-field {
+			display: flex;
+			flex-direction: column;
+			gap: 6px;
+		}
+
+		.dress-field label {
+			font-size: 12px;
+			opacity: 0.76;
+		}
+
+		.dress-field select {
+			width: 100%;
+			padding: 8px 10px;
+			border-radius: 10px;
+			border: 1.5px solid var(--border);
+			background: rgba(255,255,255,0.72);
+			font-size: 14px;
+			outline: none;
+		}
+
+		.dress-field select:focus {
+			border-color: var(--accent);
+		}
+
+		.dress-section-title {
+			margin: 0;
+			font-size: 14px;
+			font-weight: 600;
+		}
+
+		.feed-modal-card {
+			width: min(100%, 640px);
+		}
+
+		.feed-modal-subtitle {
+			margin-top: 6px;
+			font-size: 12px;
+			color: var(--text-muted);
+		}
+
+		.feed-modal-content {
+			display: flex;
+			flex-direction: column;
+			gap: 14px;
+		}
+
+		.feed-status-strip {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 10px;
+		}
+
+		.feed-status-pill {
+			padding: 12px 14px;
+			border-radius: 16px;
+			background: rgba(255,255,255,0.65);
+			border: 1px solid rgba(120,190,135,0.18);
+		}
+
+		.feed-status-label {
+			font-size: 12px;
+			color: var(--text-muted);
+			margin-bottom: 4px;
+		}
+
+		.feed-status-value {
+			font-size: 18px;
+			font-weight: 700;
+		}
+
+		.feed-food-list {
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+		}
+
+		.feed-food-item {
+			padding: 16px;
+			border-radius: 18px;
+			background: rgba(255,255,255,0.7);
+			border: 1px solid rgba(120,190,135,0.2);
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) auto;
+			gap: 14px;
+			align-items: center;
+		}
+
+		.feed-food-main {
+			display: flex;
+			flex-direction: column;
+			gap: 6px;
+		}
+
+		.feed-food-title {
+			font-size: 16px;
+			font-weight: 700;
+		}
+
+		.feed-food-desc {
+			font-size: 13px;
+			color: var(--text-muted);
+			line-height: 1.5;
+		}
+
+		.feed-food-meta {
+			display: flex;
+			gap: 10px;
+			flex-wrap: wrap;
+			font-size: 12px;
+			color: rgba(46,58,47,0.78);
+		}
+
+		.feed-meta-tag {
+			padding: 4px 10px;
+			border-radius: 999px;
+			background: rgba(76,175,80,0.1);
+		}
+
+		.feed-quantity-box {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.feed-qty-btn {
+			width: 34px;
+			height: 34px;
+			border-radius: 10px;
+			border: none;
+			background: rgba(76,175,80,0.12);
+			color: var(--accent);
+			font-size: 20px;
+			line-height: 1;
+			cursor: pointer;
+			font-weight: 700;
+		}
+
+		.feed-qty-btn:disabled {
+			opacity: 0.4;
+			cursor: not-allowed;
+		}
+
+		.feed-qty-input {
+			width: 76px;
+			height: 36px;
+			border-radius: 12px;
+			border: 1.5px solid var(--border);
+			background: rgba(255,255,255,0.88);
+			text-align: center;
+			font-size: 16px;
+			font-weight: 700;
+			outline: none;
+		}
+
+		.feed-qty-input:focus {
+			border-color: var(--accent);
+		}
+
+		.feed-error {
+			min-height: 20px;
+			font-size: 13px;
+			color: #c62828;
+		}
+
+		.feed-loading,
+		.feed-empty-tip {
+			padding: 18px 0;
+			text-align: center;
+			color: var(--text-muted);
+			font-size: 14px;
+		}
+
+		.feed-actions {
+			display: flex;
+			justify-content: flex-end;
+			gap: 10px;
+			flex-wrap: wrap;
+		}
+
+		.feed-confirm-note {
+			font-size: 12px;
+			color: var(--text-muted);
+			margin-right: auto;
+			align-self: center;
+		}
+
+		.small-note {
+			margin-top: 8px;
+			font-size: 12px;
+			opacity: 0.72;
+		}
+
+		/* ========== Stat Value Row (count + auto-feed button) ========== */
+		.stat-value-row {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			flex-wrap: wrap;
+		}
+
+
+
+		.stat-info-with-action {
+			display: flex;
+			align-items: center;
+		}
+
+		.stat-left {
+			flex: 0 0 auto;
+		}
+
+		.stat-action-wrap {
+			flex: 1;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+
+		.btn-auto-feed {
+			font-size: 13px;
+			padding: 6px 14px;
+			background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+			color: #2e7d32;
+			border: 1px solid rgba(76,175,80,0.30);
+			border-radius: 10px;
+			box-shadow: none;
+			white-space: nowrap;
+		}
+
+		.btn-auto-feed:hover {
+			background: linear-gradient(135deg, #c8e6c9, #a5d6a7);
+		}
+
+		/* ========== Auto Feed Modal ========== */
+		.auto-feed-modal-card {
+			width: min(100%, 540px);
+			padding: 28px 28px 24px;
+		}
+
+		.auto-feed-subtitle {
+			font-size: 12px;
+			color: var(--text-muted);
+			line-height: 1.6;
+			margin-top: 6px;
+		}
+
+		.auto-feed-pet-list {
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+			margin-top: 16px;
+			max-height: 360px;
+			overflow-y: auto;
+		}
+
+		.auto-feed-pet-row {
+			display: flex;
+			align-items: center;
+			gap: 14px;
+			padding: 14px 16px;
+			background: rgba(255,255,255,0.70);
+			border-radius: 14px;
+			border: 1px solid rgba(120,190,135,0.20);
+		}
+
+		.auto-feed-pet-name {
+			flex: 1;
+			min-width: 0;
+		}
+
+		.auto-feed-pet-name .pet-title {
+			font-size: 15px;
+			font-weight: 700;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.auto-feed-pet-name .pet-sub {
+			font-size: 12px;
+			color: var(--text-muted);
+			margin-top: 2px;
+		}
+
+		.auto-feed-toggle {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			flex-shrink: 0;
+		}
+
+		.auto-feed-toggle input[type=checkbox] {
+			width: 16px;
+			height: 16px;
+			accent-color: var(--accent);
+			cursor: pointer;
+		}
+
+		.auto-feed-toggle label {
+			font-size: 12px;
+			color: var(--text-muted);
+			cursor: pointer;
+			white-space: nowrap;
+		}
+
+		.auto-feed-threshold-box {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			flex-shrink: 0;
+		}
+
+		.auto-feed-threshold-box label {
+			font-size: 12px;
+			color: var(--text-muted);
+			white-space: nowrap;
+		}
+
+		.auto-feed-threshold-input {
+			width: 62px;
+			height: 34px;
+			border-radius: 9px;
+			border: 1.5px solid rgba(76,175,80,0.28);
+			background: rgba(255,255,255,0.85);
+			text-align: center;
+			font-size: 15px;
+			font-weight: 600;
+			color: var(--text);
+			padding: 0 6px;
+			outline: none;
+		}
+
+		.auto-feed-threshold-input:focus {
+			border-color: var(--accent);
+		}
+
+		.auto-feed-status {
+			margin-top: 12px;
+			font-size: 13px;
+			color: var(--text-muted);
+			line-height: 1.6;
+			min-height: 20px;
+			white-space: pre-wrap;
+		}
+
+		.auto-feed-status.success { color: #2e7d32; }
+		.auto-feed-status.error   { color: #c62828; }
+
+		/* ========== Avatar CSS (ported from choose.html) ========== */
+		.avatar-wrap {
+			position: relative;
+			width: 80px;
+			height: 126px;
+			margin-top: 4px;
+			z-index: 2;
+		}
+
+		.avatar-body {
+			position: absolute;
+			inset: 0;
+			transform-origin: center bottom;
+			--accent: #ffd66e;
+			--blush: #ffb0c7;
+		}
+
+		.avatar-body .head,
+		.avatar-body .hair,
+		.avatar-body .hair-piece,
+		.avatar-body .torso,
+		.avatar-body .arm,
+		.avatar-body .leg {
+			z-index: 2;
+		}
+
+		.avatar-body .outfit-detail,
+		.avatar-body .lower-detail {
+			z-index: 4;
+		}
+
+		.avatar-body .back-accessory {
+			z-index: 1;
+		}
+
+		.avatar {
+			position: absolute;
+			left: 50%;
+			transform: translateX(-50%);
+		}
+
+		.head {
+			top: 0;
+			width: 48px;
+			height: 48px;
+			background: var(--skin);
+			border: 3px solid rgba(0,0,0,0.08);
+			box-shadow: inset 0 -7px 0 rgba(0,0,0,0.04);
+		}
+
+		.head.face-round { border-radius: 54% 54% 46% 46%; }
+		.head.face-mochi { border-radius: 48% 48% 52% 52%; }
+		.head.face-soft-square { border-radius: 16px; }
+		.head.face-bean { border-radius: 44% 56% 50% 50%; }
+
+		.cheek {
+			position: absolute;
+			top: 28px;
+			width: 8px;
+			height: 5px;
+			border-radius: 999px;
+			background: var(--blush);
+			opacity: 0.9;
+		}
+		.cheek.left { left: 4px; }
+		.cheek.right { right: 4px; }
+
+		.hair {
+			position: absolute;
+			left: -3px;
+			top: -3px;
+			width: 48px;
+			height: 19px;
+			background: var(--hair);
+			clip-path: polygon(0 0,100% 0,100% 75%,85% 88%,70% 72%,50% 88%,30% 72%,15% 88%,0 72%);
+			z-index: 3;
+		}
+
+		.hair.style-crop {
+			height: 18px;
+			clip-path: polygon(0 0,100% 0,100% 78%,82% 90%,68% 70%,46% 88%,22% 72%,0 86%);
+		}
+		.hair.style-side-sweep {
+			height: 20px;
+			clip-path: polygon(0 0,100% 0,100% 62%,74% 76%,56% 100%,38% 78%,0 58%);
+		}
+		.hair.style-puff {
+			height: 22px;
+			border-radius: 18px 18px 12px 12px;
+			clip-path: none;
+		}
+		.hair.style-sprout {
+			height: 18px;
+			clip-path: polygon(0 0,100% 0,100% 68%,80% 82%,62% 70%,45% 88%,24% 74%,0 66%);
+		}
+		.hair.style-wave {
+			height: 22px;
+			border-radius: 18px 18px 10px 10px;
+			clip-path: none;
+		}
+		.hair.style-bob {
+			height: 22px;
+			border-radius: 18px 18px 12px 12px;
+			clip-path: none;
+		}
+		.hair.style-pony {
+			height: 18px;
+			clip-path: polygon(0 0,100% 0,100% 66%,78% 80%,56% 92%,34% 78%,0 62%);
+		}
+		.hair.style-twin-buns {
+			height: 18px;
+			border-radius: 18px 18px 10px 10px;
+			clip-path: none;
+		}
+		.hair.style-braid {
+			height: 18px;
+			clip-path: polygon(0 0,100% 0,100% 72%,76% 86%,50% 100%,24% 86%,0 72%);
+		}
+		.hair.style-cloud {
+			height: 24px;
+			border-radius: 22px 22px 12px 12px;
+			clip-path: none;
+		}
+
+		.hair-piece { position: absolute; background: var(--hair); }
+
+		.hair-piece.side-lock { left: -2px; top: 9px; width: 18px; height: 10px; border-radius: 12px 0 10px 10px; transform: rotate(-18deg); }
+		.hair-piece.wave-crest { left: 20px; top: 3px; width: 16px; height: 10px; border-radius: 999px 999px 0 999px; transform: rotate(12deg); }
+		.hair-piece.sprout-stem { left: 21px; top: -12px; width: 4px; height: 14px; border-radius: 999px; transform: rotate(-10deg); }
+		.hair-piece.sprout-leaf { left: 16px; top: -10px; width: 10px; height: 8px; border-radius: 12px 2px 12px 2px; transform: rotate(-36deg); }
+		.hair-piece.pony-tail { right: -8px; top: 10px; width: 14px; height: 28px; border-radius: 999px 999px 12px 12px; transform: rotate(16deg); }
+		.hair-piece.bun-left, .hair-piece.bun-right { top: -4px; width: 16px; height: 16px; border-radius: 50%; }
+		.hair-piece.bun-left { left: -8px; }
+		.hair-piece.bun-right { right: -8px; }
+		.hair-piece.braid-left, .hair-piece.braid-right { top: 14px; width: 8px; height: 32px; border-radius: 8px; background: repeating-linear-gradient(180deg, var(--hair) 0 5px, rgba(255,255,255,0.18) 5px 7px); }
+		.hair-piece.braid-left { left: 0; }
+		.hair-piece.braid-right { right: 0; }
+		.hair-piece.cloud-left, .hair-piece.cloud-right { top: 6px; width: 12px; height: 14px; border-radius: 50%; }
+		.hair-piece.cloud-left { left: -4px; }
+		.hair-piece.cloud-right { right: -4px; }
+
+		.eye {
+			position: absolute;
+			top: 20px;
+			width: 7px;
+			height: 7px;
+			background: #1f2b3f;
+			box-shadow: 0 0 0 2px rgba(255,255,255,0.6) inset;
+		}
+		.eye.left { left: 10px; }
+		.eye.right { right: 10px; }
+
+		.eye.eye-button { border-radius: 50%; }
+		.eye.eye-sparkle { width: 8px; height: 8px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #ffffff 0 22%, #1f2b3f 26% 100%); box-shadow: none; }
+		.eye.eye-smile { top: 22px; width: 9px; height: 5px; background: transparent; border-bottom: 3px solid #1f2b3f; border-radius: 0 0 12px 12px; box-shadow: none; }
+		.eye.eye-sleepy { top: 22px; width: 10px; height: 2px; background: #1f2b3f; border-radius: 999px; box-shadow: none; }
+
+		.mouth {
+			position: absolute;
+			left: 50%;
+			bottom: 8px;
+			transform: translateX(-50%);
+			width: 12px;
+			height: 4px;
+			border-radius: 0 0 8px 8px;
+			background: rgba(130,65,65,0.5);
+		}
+		.mouth.mouth-smile { width: 12px; height: 4px; border-radius: 0 0 8px 8px; background: rgba(130,65,65,0.5); }
+		.mouth.mouth-cat { width: 14px; height: 6px; background: transparent; border-bottom: 2px solid rgba(130,65,65,0.58); border-radius: 0 0 14px 14px; }
+		.mouth.mouth-wow { width: 8px; height: 8px; border-radius: 50%; background: rgba(130,65,65,0.52); }
+
+		.torso {
+			top: 51px;
+			width: 42px;
+			height: 36px;
+			background: var(--skin);
+			border: 3px solid rgba(0,0,0,0.08);
+			box-shadow: inset 0 -7px 0 rgba(0,0,0,0.04);
+			overflow: hidden;
+		}
+		.torso::before {
+			content: "";
+			position: absolute;
+			left: -2px; right: -2px; top: -2px; bottom: -2px;
+			background: var(--shirt);
+			border-radius: inherit;
+			box-shadow: inset 0 -7px 0 rgba(0,0,0,0.05);
+		}
+		.avatar-body.gender-girl .torso { width: 40px; border-radius: 14px 14px 12px 12px; }
+		.avatar-body.gender-boy .torso { width: 44px; border-radius: 12px 12px 10px 10px; }
+
+		.arm, .leg { position: absolute; border: 3px solid rgba(0,0,0,0.08); }
+
+		.arm {
+			top: 52px;
+			width: 12px;
+			height: 35px;
+			background: var(--skin);
+			overflow: hidden;
+		}
+		.arm::before {
+			content: "";
+			position: absolute;
+			left: -2px; right: -2px; top: -2px; bottom: 2px;
+			background: var(--sleeve);
+			border-radius: 3px;
+		}
+		.arm.left { left: 12px; }
+		.arm.right { right: 12px; }
+
+		.leg {
+			top: 87px;
+			width: 15px;
+			height: 35px;
+			background: var(--skin);
+		}
+		.leg::before {
+			content: "";
+			position: absolute;
+			left: -2px; right: -2px; top: -2px; bottom: 4px;
+			background: var(--pants);
+			border-radius: 2px;
+		}
+		.leg.left { left: 24px; }
+		.leg.right { right: 24px; }
+
+		.shoe {
+			position: absolute;
+			bottom: -4px;
+			width: 19px;
+			height: 7px;
+			background: var(--shoe);
+			z-index: 2;
+		}
+		.leg.left .shoe { left: -3px; }
+		.leg.right .shoe { right: -3px; }
+
+		.shoe.shoe-sneakers { border-radius: 8px 8px 10px 10px; }
+		.shoe.shoe-boots { height: 10px; border-radius: 6px; }
+		.shoe.shoe-loafers, .shoe.shoe-maryjane { border-radius: 999px 999px 8px 8px; }
+		.shoe.shoe-rocket, .shoe.shoe-bunny { width: 22px; }
+		.shoe.shoe-rocket::after, .shoe.shoe-bunny::after {
+			content: "";
+			position: absolute;
+			right: -3px; top: 1px;
+			width: 6px; height: 6px;
+			background: var(--accent);
+			clip-path: polygon(0 50%,100% 0,100% 100%);
+		}
+		.shoe.shoe-bunny::before {
+			content: "";
+			position: absolute;
+			left: 4px; top: -5px;
+			width: 10px; height: 6px;
+			background: rgba(255,255,255,0.86);
+			border-radius: 999px 999px 4px 4px;
+		}
+
+		/* Outfit details */
+		.outfit-detail, .back-accessory, .lower-detail { position: absolute; pointer-events: none; }
+		.outfit-detail { transform: translateY(51px); }
+
+		.back-accessory.cape { left: 16px; top: 54px; width: 48px; height: 52px; background: linear-gradient(180deg, var(--accent), var(--shirt)); clip-path: polygon(20% 0,80% 0,100% 100%,0 100%); opacity: 0.95; }
+
+		.torso.outfit-hoodie::after, .torso.outfit-dino::after { content: ""; position: absolute; left: 5px; right: 5px; top: -7px; height: 12px; border-radius: 12px 12px 6px 6px; background: color-mix(in srgb, var(--shirt) 76%, white 24%); }
+		.torso.outfit-school::after, .torso.outfit-sailor::after { content: ""; position: absolute; left: 4px; right: 4px; top: 3px; height: 10px; background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0)); clip-path: polygon(0 0,100% 0,74% 100%,50% 52%,26% 100%); }
+		.torso.outfit-cardigan::before { left: -2px; right: -2px; top: -2px; bottom: -2px; background: linear-gradient(90deg, color-mix(in srgb, var(--sleeve) 80%, white 20%) 0 32%, rgba(255,255,255,0.7) 32% 38%, color-mix(in srgb, var(--sleeve) 80%, white 20%) 38% 100%); }
+		.torso.outfit-tee::before { background: linear-gradient(180deg, color-mix(in srgb, var(--shirt) 88%, white 12%) 0 18%, var(--shirt) 18% 100%); }
+		.torso.outfit-crop-tee::before { left: -2px; right: -2px; top: -2px; bottom: 11px; background: linear-gradient(180deg, color-mix(in srgb, var(--shirt) 90%, white 10%) 0 16%, var(--shirt) 16% 100%); border-radius: 12px 12px 6px 6px; }
+		.torso.outfit-camisole::before { left: -2px; right: -2px; top: 7px; bottom: -2px; background: linear-gradient(180deg, color-mix(in srgb, var(--shirt) 90%, white 10%) 0 18%, var(--shirt) 18% 100%); border-radius: 10px 10px 12px 12px; }
+		.torso.outfit-basketball::before, .torso.outfit-sweater-vest::before { left: -2px; right: -2px; top: -2px; bottom: -2px; background: var(--shirt); clip-path: polygon(0 0,30% 0,43% 15%,57% 15%,70% 0,100% 0,100% 100%,0 100%); }
+		.torso.outfit-sweater-vest::before { background: linear-gradient(180deg, color-mix(in srgb, var(--shirt) 88%, white 12%) 0 22%, var(--shirt) 22% 100%); }
+		.torso.outfit-off-shoulder::before { left: -2px; right: -2px; top: 6px; bottom: -2px; background: linear-gradient(180deg, color-mix(in srgb, var(--shirt) 92%, white 8%) 0 18%, var(--shirt) 18% 100%); border-radius: 14px 14px 12px 12px; }
+
+		.arm.outfit-school::before, .arm.outfit-hoodie::before, .arm.outfit-cardigan::before, .arm.outfit-dino::before, .arm.outfit-cape::before { bottom: 2px; }
+		.arm.outfit-sailor::before, .arm.outfit-party::before, .arm.outfit-overall::before, .arm.outfit-tee::before, .arm.outfit-crop-tee::before { bottom: 15px; border-radius: 5px 5px 8px 8px; }
+		.arm.outfit-off-shoulder::before { top: 8px; bottom: 11px; border-radius: 999px; }
+		.arm.outfit-camisole::before, .arm.outfit-basketball::before, .arm.outfit-sweater-vest::before { display: none; }
+
+		.torso.outfit-cardigan::after, .torso.outfit-basketball::after, .torso.outfit-sweater-vest::after, .torso.outfit-off-shoulder::after { content: ""; position: absolute; pointer-events: none; }
+		.torso.outfit-cardigan::after { left: 17px; top: 2px; bottom: 2px; width: 8px; background: rgba(255,255,255,0.72); border-radius: 999px; }
+		.torso.outfit-basketball::after { left: 9px; right: 9px; top: 3px; height: 9px; border: 2px solid color-mix(in srgb, var(--accent) 78%, white 22%); border-bottom: none; clip-path: polygon(0 0,100% 0,60% 100%,40% 100%); }
+		.torso.outfit-sweater-vest::after { left: 10px; right: 10px; top: 2px; height: 9px; border: 2px solid rgba(255,255,255,0.82); border-bottom: none; clip-path: polygon(0 0,100% 0,60% 100%,40% 100%); }
+		.torso.outfit-off-shoulder::after { left: 4px; right: 4px; top: 5px; height: 9px; background: color-mix(in srgb, var(--shirt) 80%, white 20%); border-radius: 999px; }
+
+		.outfit-detail.tie { left: calc(50% - 4px); top: 7px; width: 8px; height: 18px; background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 70%, black 30%)); clip-path: polygon(50% 0,100% 22%,78% 100%,22% 100%,0 22%); }
+		.outfit-detail.ribbon { left: calc(50% - 9px); top: 10px; width: 18px; height: 8px; background: linear-gradient(90deg, var(--accent) 0 45%, color-mix(in srgb, var(--accent) 70%, white 30%) 45% 55%, var(--accent) 55% 100%); border-radius: 999px; }
+		.outfit-detail.pocket { left: calc(50% - 9px); top: 18px; width: 18px; height: 10px; border-radius: 0 0 8px 8px; border: 2px solid rgba(255,255,255,0.55); border-top: none; }
+		.outfit-detail.strap-left, .outfit-detail.strap-right { top: 1px; width: 6px; height: 18px; background: color-mix(in srgb, var(--pants) 82%, white 18%); border-radius: 999px; }
+		.outfit-detail.strap-left { left: calc(50% - 15px); }
+		.outfit-detail.strap-right { left: calc(50% + 9px); }
+		.outfit-detail.badge { left: calc(50% - 6px); top: 10px; width: 12px; height: 12px; background: var(--accent); clip-path: polygon(50% 0,63% 35%,100% 35%,72% 58%,82% 100%,50% 75%,18% 100%,28% 58%,0 35%,37% 35%); }
+		.outfit-detail.spike, .outfit-detail.spike-two, .outfit-detail.spike-three { top: -8px; width: 10px; height: 12px; background: var(--accent); clip-path: polygon(50% 0,100% 100%,0 100%); }
+		.outfit-detail.spike { left: calc(50% - 16px); }
+		.outfit-detail.spike-two { left: calc(50% - 5px); }
+		.outfit-detail.spike-three { left: calc(50% + 6px); }
+		.outfit-detail.button-line { left: calc(50% - 2px); top: 9px; width: 4px; height: 20px; background: repeating-linear-gradient(180deg, rgba(255,255,255,0.92) 0 3px, transparent 3px 8px); }
+		.outfit-detail.tee-stripe { left: calc(50% - 12px); top: 13px; width: 24px; height: 6px; background: linear-gradient(90deg, var(--accent) 0 30%, rgba(255,255,255,0.9) 30% 68%, var(--accent) 68% 100%); border-radius: 999px; }
+		.outfit-detail.crop-band { left: calc(50% - 14px); top: 19px; width: 28px; height: 4px; background: color-mix(in srgb, var(--accent) 72%, white 28%); border-radius: 999px; }
+		.outfit-detail.cami-strap-left, .outfit-detail.cami-strap-right { top: -2px; width: 5px; height: 12px; background: color-mix(in srgb, var(--shirt) 88%, white 12%); border-radius: 999px; }
+		.outfit-detail.cami-strap-left { left: calc(50% - 13px); }
+		.outfit-detail.cami-strap-right { left: calc(50% + 8px); }
+		.outfit-detail.cami-heart { left: calc(50% - 5px); top: 12px; width: 10px; height: 10px; background: var(--accent); clip-path: polygon(50% 100%,0 42%,16% 14%,38% 12%,50% 28%,62% 12%,84% 14%,100% 42%); }
+		.outfit-detail.sport-band { left: calc(50% - 13px); top: 13px; width: 26px; height: 5px; background: linear-gradient(90deg, rgba(255,255,255,0.88) 0 20%, var(--accent) 20% 80%, rgba(255,255,255,0.88) 80% 100%); border-radius: 999px; }
+		.outfit-detail.sport-number { left: calc(50% - 6px); top: 18px; width: 12px; height: 10px; background: linear-gradient(90deg, rgba(255,255,255,0.92) 0 22%, transparent 22% 34%, rgba(255,255,255,0.92) 34% 56%, transparent 56% 68%, rgba(255,255,255,0.92) 68% 100%); border-radius: 2px; }
+		.outfit-detail.vest-line { left: calc(50% - 12px); top: 13px; width: 24px; height: 4px; background: linear-gradient(90deg, rgba(255,255,255,0.9), var(--accent), rgba(255,255,255,0.9)); border-radius: 999px; }
+		.outfit-detail.off-band { left: calc(50% - 16px); top: 5px; width: 32px; height: 5px; background: color-mix(in srgb, var(--accent) 58%, white 42%); border-radius: 999px; }
+
+		.lower-detail.skirt, .lower-detail.dress-hem { left: 17px; top: 84px; width: 46px; height: 18px; background: color-mix(in srgb, var(--pants) 62%, white 38%); clip-path: polygon(8% 0,92% 0,100% 100%,0 100%); border-radius: 0 0 10px 10px; }
+		.lower-detail.bloomer { left: 21px; top: 86px; width: 38px; height: 18px; background: color-mix(in srgb, var(--pants) 72%, white 28%); border-radius: 12px; }
+
+		.leg.bottom-jogger::before, .leg.bottom-cuffed::before { background: var(--pants); }
+		.leg.bottom-shorts::before, .leg.bottom-bloomer::before { bottom: 18px; border-radius: 4px 4px 8px 8px; }
+		.leg.bottom-striped::before { background: repeating-linear-gradient(180deg, var(--pants) 0 6px, color-mix(in srgb, var(--pants) 65%, white 35%) 6px 10px); }
+		.leg.bottom-leggings::before { background: color-mix(in srgb, var(--pants) 78%, black 22%); }
+		.leg.bottom-skirt::before, .leg.bottom-dress-hem::before { display: none; }
+		.leg.bottom-bloomer::before { background: color-mix(in srgb, var(--pants) 72%, white 28%); }
+		.leg.bottom-skirt, .leg.bottom-dress-hem, .leg.bottom-bloomer, .leg.bottom-shorts { background: var(--skin); }
+		.leg.bottom-cuffed::after, .leg.bottom-jogger::after, .leg.bottom-leggings::after { content: ""; position: absolute; left: -2px; right: -2px; bottom: 8px; height: 5px; border-radius: 999px; background: rgba(255,255,255,0.28); }
+
+		@media (min-width: 721px) {
+			.main-content {
+				margin: 16px auto 12px;
+				padding: 0 28px;
+			}
+
+			.profile-layout {
+				grid-template-columns: max-content minmax(340px, 1fr);
+				gap: 20px;
+				align-items: start;
+			}
+
+			.top-cards-row {
+				display: grid;
+				grid-template-columns: 332px 332px;
+				gap: 20px;
+				align-items: stretch;
+				width: max-content;
+			}
+
+			.top-cards-row > * {
+				width: 332px;
+				height: 100%;
+			}
+
+			.avatar-panel,
+			.pet-card-panel,
+			.activity-card {
+				border-radius: 18px;
+			}
+
+			.avatar-panel,
+			.pet-card-panel {
+				min-height: 396px;
+			}
+
+			.avatar-panel {
+				padding: 24px 20px;
+				gap: 16px;
+			}
+
+			.avatar-stage {
+				height: 240px;
+				padding-top: 16px;
+			}
+
+			.avatar-stage .avatar-wrap {
+				width: 120px;
+				height: 210px;
+			}
+
+			.avatar-stage .avatar-body {
+				width: 80px;
+				height: 126px;
+				transform: translateX(-50%) scale(1.45);
+			}
+
+			.avatar-summary-text {
+				font-size: 13px;
+				line-height: 1.45;
+			}
+
+			.pet-card-panel {
+				padding: 20px 18px 18px;
+				gap: 8px;
+			}
+
+			.pet-card-stack,
+			.pet-card-layer {
+				min-height: 248px;
+			}
+
+			.pet-card-stack {
+				flex: 1 1 auto;
+			}
+
+			.pet-card-panel .pet-visual {
+				height: 116px;
+			}
+
+			.pet-card-panel .pet-visual img {
+				max-width: 108px;
+				max-height: 108px;
+			}
+
+			.pet-card-panel .pet-stats {
+				gap: 8px;
+			}
+
+			.pet-card-panel .pet-stat-row {
+				grid-template-columns: 62px 1fr;
+				gap: 10px;
+			}
+
+			.pet-card-panel .pet-stat-text {
+				font-size: 12px;
+			}
+
+			.pet-dots {
+				margin-top: 6px;
+			}
+
+			.pet-card-panel .pet-actions {
+				margin-top: 12px;
+			}
+
+			.pet-card-panel .pet-actions .feed-btn {
+				padding: 10px 26px;
+				font-size: 15px;
+			}
+
+			.activity-panel {
+				width: 100%;
+				align-self: start;
+			}
+
+			.activity-card {
+				padding: 14px 18px;
+			}
+
+			.activity-card-title {
+				margin-bottom: 8px;
+			}
+		}
+
+		/* ========== Responsive ========== */
+		@media (max-width: 720px) {
+			.snack-cards-grid {
+				gap: 12px;
+			}
+
+			.snack-cards-grid .activity-card {
+				flex: 0 0 calc((100% - 12px) / 2);
+			}
+
+			.modal {
+				align-items: flex-start;
+				padding: 12px;
+			}
+
+			.dress-modal-card {
+				max-height: calc(100vh - 24px);
+				padding: 20px 16px;
+			}
+
+			.profile-layout {
+				grid-template-columns: 1fr;
+			}
+			.top-cards-row {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 12px;
+				align-items: stretch;
+			}
+			.top-cards-row .avatar-panel,
+			.top-cards-row .pet-card-panel {
+				min-height: 0;
+			}
+			.avatar-stage {
+				height: 180px;
+			}
+			.avatar-stage .avatar-wrap {
+				height: 160px;
+			}
+			.avatar-stage .avatar-body {
+				transform: translateX(-50%) scale(1.2);
+			}
+			.pet-card-panel .pet-visual {
+				height: 90px;
+			}
+			.pet-card-panel .pet-visual img {
+				max-width: 86px;
+				max-height: 86px;
+			}
+
+			/* Mobile: ensure pet image is centered and stats sit at card bottom in four rows */
+			.pet-card-panel {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				padding: 14px 12px 18px;
+				min-height: 220px;
+			}
+
+			.pet-card-panel .pet-visual {
+				order: 2;
+				margin-top: 8px;
+				margin-bottom: 8px;
+				flex: 0 0 auto;
+			}
+
+			.pet-card-panel .pet-card-top { order: 1; width: 100%; }
+
+			.pet-card-panel .pet-stats { order: 3; margin-top: auto; width: 100%; display: flex; flex-direction: column; gap: 8px; }
+
+			.pet-card-panel .pet-stat-row-mobile { display: flex; align-items: center; gap: 4px; width: 100%; }
+			.pet-card-panel .pet-stat-row-mobile .pet-stat-label { font-size: 11px; color: rgba(46,58,47,0.62); white-space: nowrap; flex-shrink: 0; }
+			.pet-card-panel .pet-stat-row-mobile .pet-stat-value { font-size: 11px; color: rgba(46,58,47,0.72); white-space: nowrap; }
+			.pet-card-panel .pet-stat-row-mobile .growth-bar-wrap, .pet-card-panel .pet-stat-row-mobile .satiety-bar-wrap { flex: 1; min-width: 0; height: 7px; }
+
+			/* Align feed button and dress button to the same bottom position */
+			.pet-card-panel .pet-actions {
+				margin-top: auto;
+			}
+			.avatar-panel .btn-dress {
+				margin-top: auto;
+			}
+
+			.dress-layout {
+				grid-template-columns: 1fr;
+				gap: 14px;
+			}
+
+			.dress-form-grid {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				gap: 10px;
+			}
+
+			.dress-controls {
+				gap: 12px;
+			}
+
+			.dress-field label {
+				font-size: 11px;
+			}
+
+			.dress-field select {
+				padding: 8px 9px;
+				font-size: 13px;
+			}
+
+			.feed-modal-card {
+				width: min(100%, 560px);
+				padding: 18px 14px;
+			}
+
+			.feed-modal-card .modal-head {
+				margin-bottom: 14px;
+			}
+
+			.feed-modal-card .modal-head h2 {
+				font-size: 18px;
+				line-height: 1.35;
+			}
+
+			.feed-modal-subtitle {
+				font-size: 11px;
+				line-height: 1.5;
+			}
+
+			.feed-modal-content {
+				gap: 12px;
+			}
+
+			.feed-status-strip {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				gap: 8px;
+			}
+
+			.feed-status-pill {
+				padding: 10px 12px;
+			}
+
+			.feed-status-value {
+				font-size: 16px;
+			}
+
+			.feed-food-list {
+				display: grid;
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				gap: 10px;
+			}
+
+			.feed-food-item {
+				grid-template-columns: 1fr;
+				gap: 10px;
+				padding: 14px 12px;
+			}
+
+			.feed-food-title {
+				font-size: 15px;
+			}
+
+			.feed-food-desc {
+				font-size: 12px;
+			}
+
+			.feed-food-meta {
+				gap: 8px;
+				font-size: 11px;
+			}
+
+			.feed-quantity-box {
+				justify-content: space-between;
+				width: 100%;
+				gap: 6px;
+			}
+
+			.feed-qty-btn {
+				width: 32px;
+				height: 32px;
+				font-size: 18px;
+				flex: 0 0 32px;
+			}
+
+			.feed-qty-input {
+				flex: 1 1 auto;
+				width: auto;
+				min-width: 0;
+				height: 34px;
+				font-size: 15px;
+			}
+
+			.feed-actions {
+				justify-content: stretch;
+				gap: 8px;
+			}
+
+			.feed-actions .btn {
+				flex: 1 1 0;
+				padding-left: 12px;
+				padding-right: 12px;
+			}
+
+			.feed-confirm-note {
+				width: 100%;
+				margin-right: 0;
+				font-size: 11px;
+				line-height: 1.5;
+			}
+
+			.feed-error,
+			.feed-loading,
+			.feed-empty-tip {
+				font-size: 12px;
+			}
+		}
+
+		@media (max-width: 420px) {
+			.modal {
+				padding: 8px;
+			}
+
+			.feed-modal-card {
+				padding: 16px 12px;
+				border-radius: 22px;
+			}
+
+			.feed-modal-card .modal-head {
+				gap: 8px;
+			}
+
+			.feed-modal-card .modal-head h2 {
+				font-size: 17px;
+			}
+
+			.feed-modal-card .modal-close {
+				width: 38px;
+				height: 38px;
+				font-size: 20px;
+				flex: 0 0 38px;
+			}
+
+			.feed-status-pill {
+				padding: 9px 10px;
+			}
+
+			.feed-food-item {
+				padding: 12px 10px;
+				border-radius: 16px;
+			}
+
+			.feed-food-meta {
+				flex-direction: column;
+				align-items: flex-start;
+				gap: 6px;
+			}
+
+			.feed-meta-tag {
+				padding: 4px 8px;
+			}
+
+			.feed-quantity-box {
+				gap: 5px;
+			}
+
+			.feed-qty-btn {
+				width: 30px;
+				height: 30px;
+				flex-basis: 30px;
+			}
+
+			.feed-qty-input {
+				height: 32px;
+				font-size: 14px;
+			}
+
+			.feed-actions {
+				flex-direction: column;
+			}
+
+			.feed-actions .btn {
+				width: 100%;
+				flex: none;
+			}
+		}
+	</style>
+</head>
+<body>
+	<!-- Title Bar -->
+	<div class="title-bar">
+		<h1>🌿 个人中心</h1>
+		<div class="title-bar-right">
+			<div id="userInfoArea" class="user-info" style="display:none;">
+				<span class="username" id="displayUsername"></span>
+				<span class="userid" id="displayUserId"></span>
+			</div>
+			<button id="loginBtn" class="btn btn-login" style="display:none;">Log in</button>
+			<button id="logoutBtn" class="btn btn-logout" style="display:none;">Log out</button>
+			<button id="backBtn" class="btn btn-outline" title="返回首页">返回</button>
+		</div>
+	</div>
+
+	<!-- Main Content -->
+	<div class="main-content">
+		<!-- Not logged in prompt -->
+		<div id="loginPromptArea" class="login-prompt" style="display:none;">
+			<h2>欢迎来到个人中心</h2>
+			<p>请先登录以查看你的互动数据和角色形象。</p>
+			<button class="btn btn-primary" onclick="openLoginModal()">登录账号</button>
+		</div>
+
+		<!-- Logged in profile -->
+		<div id="profileArea" class="profile-layout" style="display:none;">
+			<!-- Top: Avatar + Pet Card -->
+			<div class="top-cards-row">
+				<div class="avatar-panel">
+					<div id="avatarStage" class="avatar-stage">
+						<div id="avatarContainer" class="avatar-wrap"></div>
+					</div>
+					<div id="avatarSummaryText" class="avatar-summary-text"></div>
+					<div id="noChooseDataHint" class="no-data-hint" style="display:none;">暂无课堂互动数据</div>
+					<button id="dressBtn" class="btn btn-dress" style="display:none;">✨ 换装</button>
+				</div>
+				<div id="petCardPanel" class="pet-card-panel">
+					<div class="pet-no-data">加载中...</div>
+				</div>
+			</div>
+
+		<!-- Right/Below: Activity Data -->
+			<div class="activity-panel">
+				<div class="activity-card">
+					<div class="activity-card-title"><span class="icon">📚</span> 英语训练</div>
+					<div class="stat-row">
+						<div class="stat-icon petfood">🧱</div>
+						<div class="stat-info stat-info-with-action">
+							<div class="stat-left">
+								<div class="stat-label">可用作宠物主食</div>
+								<div><span id="petFoodCountValue" class="stat-value">0</span><span class="stat-unit">个</span></div>
+							</div>
+							<div class="stat-action-wrap">
+								<button id="autoFeedBtn" class="btn btn-auto-feed" style="display:none;">⚙️ 自动喂食</button>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="snack-cards-grid">
+					<div class="activity-card">
+						<div class="activity-card-title"><span class="icon">🎮</span> 课堂互动</div>
+						<div class="stat-row">
+							<div class="stat-icon candy">🍬</div>
+							<div class="stat-info">
+								<div class="stat-label">可用作宠物零食</div>
+								<div><span id="candyCountValue" class="stat-value">0</span><span class="stat-unit">个</span></div>
+							</div>
+						</div>
+					</div>
+					<!-- More snack cards can be added here in the future -->
+				</div>
+			</div>
+
+		</div>
+	</div>
+
+	<!-- Login Modal -->
+	<div id="loginModal" class="modal" aria-hidden="true">
+		<div class="modal-card" role="dialog" aria-modal="true">
+			<div class="modal-head">
+				<h2>登录</h2>
+				<button class="modal-close" onclick="closeLoginModal()">×</button>
+			</div>
+			<div class="form-row">
+				<label for="loginUsername">用户名</label>
+				<input id="loginUsername" type="text" placeholder="请输入用户名" autocomplete="username">
+			</div>
+			<div class="form-row">
+				<label for="loginPassword">密码</label>
+				<input id="loginPassword" type="password" placeholder="请输入密码" autocomplete="current-password">
+			</div>
+			<div id="loginError" class="login-error"></div>
+			<div class="login-actions">
+				<button class="btn btn-primary" onclick="handleLogin()">登录</button>
+				<button class="btn btn-outline" onclick="closeLoginModal()">取消</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Dress Modal -->
+	<div id="dressModal" class="modal" aria-hidden="true">
+		<div class="modal-card dress-modal-card" role="dialog" aria-modal="true">
+			<div class="modal-head">
+				<div>
+					<h2>换装间</h2>
+					<div class="small-note">保存形象需要 5 个糖果，形象将同步到所有课堂。</div>
+				</div>
+				<button class="modal-close" onclick="closeDressModal()">×</button>
+			</div>
+			<div class="dress-layout">
+				<div class="dress-preview-panel">
+					<div id="dressPreviewStage" class="dress-preview-stage"></div>
+					<div id="dressPreviewName" class="dress-preview-name">—</div>
+					<div id="dressPreviewSummary" class="dress-preview-summary">在右侧挑选风格、脸型、发型和服装。</div>
+					<div class="dress-quick-actions">
+						<button class="btn btn-outline" onclick="randomizeDressDraft()">随机穿搭</button>
+						<button class="btn btn-soft" onclick="resetDressDraft()">恢复默认</button>
+					</div>
+				</div>
+				<div class="dress-controls">
+					<h3 class="dress-section-title">基础分类</h3>
+					<div class="dress-form-grid">
+						<div class="dress-field">
+							<label for="dressGenderSelect">风格分类</label>
+							<select id="dressGenderSelect"></select>
+						</div>
+						<div class="dress-field">
+							<label for="dressPaletteSelect">配色主题</label>
+							<select id="dressPaletteSelect"></select>
+						</div>
+						<div class="dress-field">
+							<label for="dressSkinToneSelect">肤色</label>
+							<select id="dressSkinToneSelect"></select>
+						</div>
+						<div class="dress-field">
+							<label for="dressFaceShapeSelect">脸型</label>
+							<select id="dressFaceShapeSelect"></select>
+						</div>
+					</div>
+
+					<h3 class="dress-section-title">表情与头发</h3>
+					<div class="dress-form-grid">
+						<div class="dress-field">
+							<label for="dressEyeStyleSelect">眼睛</label>
+							<select id="dressEyeStyleSelect"></select>
+						</div>
+						<div class="dress-field">
+							<label for="dressMouthStyleSelect">嘴型</label>
+							<select id="dressMouthStyleSelect"></select>
+						</div>
+						<div class="dress-field">
+							<label for="dressHairStyleSelect">发型</label>
+							<select id="dressHairStyleSelect"></select>
+						</div>
+					</div>
+
+					<h3 class="dress-section-title">服装搭配</h3>
+					<div class="dress-form-grid">
+						<div class="dress-field">
+							<label for="dressOutfitStyleSelect">上装</label>
+							<select id="dressOutfitStyleSelect"></select>
+						</div>
+						<div class="dress-field">
+							<label for="dressBottomStyleSelect">下装</label>
+							<select id="dressBottomStyleSelect"></select>
+						</div>
+						<div class="dress-field">
+							<label for="dressShoeStyleSelect">鞋子</label>
+							<select id="dressShoeStyleSelect"></select>
+						</div>
+					</div>
+
+					<div class="dress-actions">
+						<button class="btn btn-primary" onclick="saveDressDraft()">保存形象</button>
+						<button class="btn btn-outline" onclick="closeDressModal()">取消</button>
+						<span class="dress-cost-note">保存形象需要交 5 个糖果</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Feed Modal -->
+	<div id="feedModal" class="modal" aria-hidden="true">
+		<div class="modal-card feed-modal-card" role="dialog" aria-modal="true">
+			<div class="modal-head">
+				<div>
+					<h2 id="feedModalTitle">正在对宠物进行喂食</h2>
+					<div id="feedModalSubtitle" class="feed-modal-subtitle">请设置本次要喂食的数量。</div>
+				</div>
+				<button class="modal-close" type="button" onclick="closeFeedModal()">×</button>
+			</div>
+			<div class="feed-modal-content">
+				<div class="feed-status-strip">
+					<div class="feed-status-pill">
+						<div class="feed-status-label">当前饱腹值</div>
+						<div id="feedCurrentSatiety" class="feed-status-value">0/100</div>
+					</div>
+					<div class="feed-status-pill">
+						<div class="feed-status-label">本次喂食后预计</div>
+						<div id="feedProjectedSatiety" class="feed-status-value">0/100</div>
+					</div>
+				</div>
+				<div id="feedModalError" class="feed-error"></div>
+				<div id="feedFoodList" class="feed-food-list">
+					<div class="feed-loading">正在加载喂食信息...</div>
+				</div>
+				<div class="feed-actions">
+					<span class="feed-confirm-note">数量默认为 0，0 表示本次不喂该食物。</span>
+					<button class="btn btn-outline" type="button" onclick="closeFeedModal()">取消</button>
+					<button id="feedConfirmBtn" class="btn btn-primary" type="button" onclick="submitFeedPets()">确认喂食</button>
+				</div>
+			</div>
+		</div>
+
+			<!-- Adopt Modal -->
+			<div id="adoptModal" class="modal" aria-hidden="true">
+				<div class="modal-card dress-modal-card" role="dialog" aria-modal="true">
+					<div class="modal-head">
+						<div>
+							<h2 id="adoptModalTitle">🎉 领养宠物</h2>
+							<div id="adoptInfo" class="small-note">为当前的宠物蛋选择一只宠物吧。</div>
+						</div>
+						<button class="modal-close" type="button" onclick="closeAdoptModal()">×</button>
+					</div>
+					<div style="padding:8px 18px 18px;">
+						<div id="petTypeGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-height:420px;overflow:auto;padding:8px 4px;">
+							<div class="feed-loading">正在加载宠物类型...</div>
+						</div>
+						<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px;">
+							<button class="btn btn-outline" type="button" onclick="closeAdoptModal()">取消</button>
+							<button id="confirmAdoptBtn" class="btn btn-primary" type="button" onclick="confirmAdoptForAccount()" disabled>🐾 确认领养</button>
+						</div>
+					</div>
+				</div>
+			</div>
+	</div>
+
+	<!-- Auto Feed Modal -->
+	<div id="autoFeedModal" class="modal" aria-hidden="true">
+		<div class="modal-card auto-feed-modal-card" role="dialog" aria-modal="true">
+			<div class="modal-head">
+				<div>
+					<h2>⚙️ 自动喂食设置</h2>
+					<div class="auto-feed-subtitle">当宠物饱腹值低于设定阈値时，后台将自动使用宠物主食进行喂食（每次 +10）。若主食总量不足以完成所有宠物的计划，则本次全部取消。调度器每 10 分钟检查一次。</div>
+				</div>
+				<button class="modal-close" type="button" onclick="closeAutoFeedModal()">×</button>
+			</div>
+			<div id="autoFeedPetList" class="auto-feed-pet-list">
+				<div class="feed-loading">正在加载...</div>
+			</div>
+			<div id="autoFeedStatus" class="auto-feed-status"></div>
+			<div class="feed-actions" style="margin-top:16px;">
+				<button class="btn btn-outline" type="button" onclick="closeAutoFeedModal()">关闭</button>
+				<button id="autoFeedSaveBtn" class="btn btn-primary" type="button" onclick="saveAutoFeedConfig()">保存设置</button>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		const LOGIN_STORAGE_KEY = 'loggedInUser';
+		const FEED_UI_CONFIG = {
+			pet_food: { label: '宠物主食', satietyDelta: 10, inventoryKey: 'petFoodCount' },
+			candy: { label: '糖果', satietyDelta: 2, inventoryKey: 'candyCount' }
+		};
+
+		/* ========== Avatar Option Constants (same as choose.html) ========== */
+		const AVATAR_SKIN_TONES = [
+			{ id: 'warm-light', label: '奶油白桃', color: '#f4c58a', blush: '#ffb5c7' },
+			{ id: 'honey', label: '蜂蜜麦芽', color: '#e6b47a', blush: '#ffb0bf' },
+			{ id: 'caramel', label: '焦糖可可', color: '#d59c63', blush: '#f29bb0' },
+			{ id: 'soft-porcelain', label: '云朵瓷肤', color: '#f0d0a9', blush: '#ffbfd1' }
+		];
+		const AVATAR_GENDER_OPTIONS = [
+			{ id: 'boy', label: '男生系' },
+			{ id: 'girl', label: '女生系' }
+		];
+		const AVATAR_FACE_SHAPES = [
+			{ id: 'round', label: '圆润脸' },
+			{ id: 'mochi', label: '糯米脸' },
+			{ id: 'soft-square', label: '软方脸' },
+			{ id: 'bean', label: '豆豆脸' }
+		];
+		const AVATAR_EYE_STYLES = [
+			{ id: 'button', label: '豆豆眼' },
+			{ id: 'sparkle', label: '星星眼' },
+			{ id: 'smile', label: '弯弯眼' },
+			{ id: 'sleepy', label: '懒懒眼' }
+		];
+		const AVATAR_MOUTH_STYLES = [
+			{ id: 'smile', label: '微笑嘴' },
+			{ id: 'cat', label: '猫咪嘴' },
+			{ id: 'wow', label: '惊喜嘴' }
+		];
+		const AVATAR_PALETTES = [
+			{ id: 'mint-scout', label: '薄荷探险', genders: ['boy'], hair: '#3d3128', shirt: '#4bb58e', sleeve: '#7ad7b7', pants: '#476b5d', shoe: '#3f332e', accent: '#ffd466' },
+			{ id: 'sky-cadet', label: '晴空校队', genders: ['boy'], hair: '#2d2d3d', shirt: '#5f8fff', sleeve: '#8eb1ff', pants: '#465f8e', shoe: '#344152', accent: '#ffe36a' },
+			{ id: 'cocoa-hood', label: '可可连帽', genders: ['boy'], hair: '#5b3d30', shirt: '#c9855e', sleeve: '#ebb08e', pants: '#6b5a4a', shoe: '#4b3c34', accent: '#ffe89d' },
+			{ id: 'rocket-pop', label: '火箭汽水', genders: ['boy'], hair: '#4f362b', shirt: '#ff8a5b', sleeve: '#ffb083', pants: '#4c5b7a', shoe: '#374151', accent: '#7fe0ff' },
+			{ id: 'berry-bunny', label: '莓果兔兔', genders: ['girl'], hair: '#7f5539', shirt: '#f28bb7', sleeve: '#ffc1da', pants: '#8d6ab1', shoe: '#5f4c6c', accent: '#fff0a6' },
+			{ id: 'cream-sailor', label: '奶油水手', genders: ['girl'], hair: '#6b4932', shirt: '#7aa8ff', sleeve: '#afc7ff', pants: '#5574be', shoe: '#435064', accent: '#ffd98f' },
+			{ id: 'lilac-dream', label: '香芋梦境', genders: ['girl'], hair: '#5c476f', shirt: '#b991ff', sleeve: '#dac0ff', pants: '#8262b7', shoe: '#584666', accent: '#ffe780' },
+			{ id: 'peach-party', label: '蜜桃派对', genders: ['girl'], hair: '#7f5539', shirt: '#ff9f7c', sleeve: '#ffc3aa', pants: '#d7788c', shoe: '#75515e', accent: '#fff0ac' },
+			{ id: 'lemon-pudding', label: '柠檬布丁', genders: ['boy', 'girl'], hair: '#6c5035', shirt: '#f3c95c', sleeve: '#ffe08f', pants: '#6b7c96', shoe: '#4a5564', accent: '#ff9fb5' },
+			{ id: 'aqua-cape', label: '海盐披风', genders: ['boy', 'girl'], hair: '#364455', shirt: '#57c1c4', sleeve: '#8de0e2', pants: '#4b6e92', shoe: '#344454', accent: '#ffd36e' }
+		];
+		const AVATAR_HAIR_STYLES = [
+			{ id: 'crop', label: '短短刺刺', genders: ['boy'] },
+			{ id: 'side-sweep', label: '侧梳刘海', genders: ['boy'] },
+			{ id: 'puff', label: '蓬松蘑菇', genders: ['boy', 'girl'] },
+			{ id: 'sprout', label: '小芽呆毛', genders: ['boy', 'girl'] },
+			{ id: 'wave', label: '卷卷波浪', genders: ['girl'] },
+			{ id: 'bob', label: '果冻短波波', genders: ['girl'] },
+			{ id: 'pony', label: '活力马尾', genders: ['girl'] },
+			{ id: 'twin-buns', label: '双丸子', genders: ['girl'] },
+			{ id: 'braid', label: '软糖麻花辫', genders: ['girl'] },
+			{ id: 'cloud', label: '棉花云团', genders: ['boy', 'girl'] }
+		];
+		const AVATAR_OUTFIT_STYLES = [
+			{ id: 'hoodie', label: '软糖连帽衫', genders: ['boy', 'girl'] },
+			{ id: 'tee', label: '彩条T恤', genders: ['boy', 'girl'] },
+			{ id: 'school', label: '元气校服', genders: ['boy'] },
+			{ id: 'cardigan', label: '奶油开衫', genders: ['boy', 'girl'] },
+			{ id: 'dino', label: '恐龙外套', genders: ['boy'] },
+			{ id: 'basketball', label: '篮球背心', genders: ['boy'] },
+			{ id: 'sweater-vest', label: 'V领背心', genders: ['boy', 'girl'] },
+			{ id: 'sailor', label: '水手上衣', genders: ['girl'] },
+			{ id: 'crop-tee', label: '露肚T恤', genders: ['girl'] },
+			{ id: 'camisole', label: '甜心吊带', genders: ['girl'] },
+			{ id: 'off-shoulder', label: '露肩上衣', genders: ['girl'] },
+			{ id: 'overall', label: '背带装', genders: ['boy', 'girl'] },
+			{ id: 'cape', label: '披风勇者', genders: ['boy', 'girl'] },
+			{ id: 'party', label: '节日礼服', genders: ['girl'] }
+		];
+		const AVATAR_BOTTOM_STYLES = [
+			{ id: 'jogger', label: '束脚裤', genders: ['boy', 'girl'] },
+			{ id: 'cuffed', label: '卷边裤', genders: ['boy', 'girl'] },
+			{ id: 'shorts', label: '短裤', genders: ['boy', 'girl'] },
+			{ id: 'striped', label: '条纹裤袜', genders: ['girl'] },
+			{ id: 'leggings', label: '打底裤', genders: ['girl'] },
+			{ id: 'skirt', label: '小裙摆', genders: ['girl'] },
+			{ id: 'dress-hem', label: '连衣下摆', genders: ['girl'] },
+			{ id: 'bloomer', label: '灯笼短裤', genders: ['girl'] }
+		];
+		const AVATAR_SHOE_STYLES = [
+			{ id: 'sneakers', label: '糖豆运动鞋', genders: ['boy', 'girl'] },
+			{ id: 'boots', label: '小冒险靴', genders: ['boy', 'girl'] },
+			{ id: 'loafers', label: '学院鞋', genders: ['boy', 'girl'] },
+			{ id: 'maryjane', label: '玛丽珍鞋', genders: ['girl'] },
+			{ id: 'rocket', label: '火箭鞋', genders: ['boy', 'girl'] },
+			{ id: 'bunny', label: '兔耳鞋', genders: ['girl'] }
+		];
+		const AVATAR_DEFAULTS = {
+			boy: { gender: 'boy', paletteId: 'sky-cadet', skinTone: 'honey', faceShape: 'soft-square', eyeStyle: 'sparkle', mouthStyle: 'smile', hairStyle: 'crop', outfitStyle: 'school', bottomStyle: 'jogger', shoeStyle: 'sneakers', customColors: null },
+			girl: { gender: 'girl', paletteId: 'berry-bunny', skinTone: 'soft-porcelain', faceShape: 'mochi', eyeStyle: 'sparkle', mouthStyle: 'smile', hairStyle: 'bob', outfitStyle: 'sailor', bottomStyle: 'skirt', shoeStyle: 'maryjane', customColors: null }
+		};
+
+		/* ========== State ========== */
+		const state = {
+			loggedIn: false,
+			user: null,       // { username, password, deviceId }
+			profile: null,    // from API: { username, displayName, userId, source, hasChooseData, candyCount, avatarAppearance }
+			dressDraft: null,  // current dress editor draft
+			myPets: [],        // pet garden pets for current user
+			currentPetIndex: 0, // index of currently viewed pet
+			petSwipeGesture: null,
+			suppressPetClickUntil: 0,
+			feedModal: {
+				petId: null,
+				petName: '',
+				petTypeName: '',
+				satiety: 0,
+				inventory: { candyCount: 0, petFoodCount: 0 },
+				weeklyQuota: null,
+				quantities: { pet_food: 0, candy: 0 },
+				errorMessage: '',
+				loading: false,
+				submitting: false
+			}
+		};
+
+		function resetFeedModalState() {
+			state.feedModal = {
+				petId: null,
+				petName: '',
+				petTypeName: '',
+				satiety: 0,
+				inventory: { candyCount: 0, petFoodCount: 0 },
+				weeklyQuota: null,
+				quantities: { pet_food: 0, candy: 0 },
+				errorMessage: '',
+				loading: false,
+				submitting: false
+			};
+		}
+
+		/* ========== Utility functions (ported from choose.html) ========== */
+		function escapeHtml(value) {
+			return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+		}
+
+		function findOptionById(options, id) {
+			return options.find(o => o.id === id) || null;
+		}
+
+		function filterOptionsByGender(options, gender) {
+			return options.filter(o => !o.genders || o.genders.includes(gender));
+		}
+
+		function pickRandom(values, randomFn = Math.random) {
+			return values[Math.floor(randomFn() * values.length)];
+		}
+
+		function pickRandomOptionId(options, randomFn = Math.random) {
+			return pickRandom(options, randomFn).id;
+		}
+
+		function ensureOptionId(id, options, fallbackId) {
+			return findOptionById(options, id) ? id : fallbackId;
+		}
+
+		function parseHexColor(color) {
+			if (typeof color !== 'string') return null;
+			const match = color.trim().match(/^#([0-9a-f]{6})$/i);
+			if (!match) return null;
+			return { r: parseInt(match[1].slice(0,2),16), g: parseInt(match[1].slice(2,4),16), b: parseInt(match[1].slice(4,6),16) };
+		}
+
+		function findClosestSkinToneId(color) {
+			const parsed = parseHexColor(color);
+			if (!parsed) return AVATAR_SKIN_TONES[0].id;
+			let bestId = AVATAR_SKIN_TONES[0].id, bestDist = Infinity;
+			AVATAR_SKIN_TONES.forEach(tone => {
+				const t = parseHexColor(tone.color);
+				const d = Math.abs(parsed.r - t.r) + Math.abs(parsed.g - t.g) + Math.abs(parsed.b - t.b);
+				if (d < bestDist) { bestDist = d; bestId = tone.id; }
+			});
+			return bestId;
+		}
+
+		function normalizeCustomColors(customColors) {
+			if (!customColors || typeof customColors !== 'object') return null;
+			const normalized = {};
+			['skin','hair','shirt','sleeve','pants','shoe','accent','blush'].forEach(key => {
+				if (typeof customColors[key] === 'string' && customColors[key].trim()) normalized[key] = customColors[key].trim();
+			});
+			return Object.keys(normalized).length > 0 ? normalized : null;
+		}
+
+		function createDefaultAvatarAppearance(preferredGender = 'boy') {
+			return { ...AVATAR_DEFAULTS[preferredGender] };
+		}
+
+		function createAvatarAppearance(randomFn = Math.random, preferredGender = null) {
+			const gender = ensureOptionId(preferredGender, AVATAR_GENDER_OPTIONS, pickRandomOptionId(AVATAR_GENDER_OPTIONS, randomFn));
+			return {
+				gender,
+				paletteId: pickRandomOptionId(filterOptionsByGender(AVATAR_PALETTES, gender), randomFn),
+				skinTone: pickRandomOptionId(AVATAR_SKIN_TONES, randomFn),
+				faceShape: pickRandomOptionId(AVATAR_FACE_SHAPES, randomFn),
+				eyeStyle: pickRandomOptionId(AVATAR_EYE_STYLES, randomFn),
+				mouthStyle: pickRandomOptionId(AVATAR_MOUTH_STYLES, randomFn),
+				hairStyle: pickRandomOptionId(filterOptionsByGender(AVATAR_HAIR_STYLES, gender), randomFn),
+				outfitStyle: pickRandomOptionId(filterOptionsByGender(AVATAR_OUTFIT_STYLES, gender), randomFn),
+				bottomStyle: pickRandomOptionId(filterOptionsByGender(AVATAR_BOTTOM_STYLES, gender), randomFn),
+				shoeStyle: pickRandomOptionId(filterOptionsByGender(AVATAR_SHOE_STYLES, gender), randomFn),
+				customColors: null
+			};
+		}
+
+		function normalizeLegacyAvatarAppearance(a) {
+			const seeded = createAvatarAppearance();
+			return normalizeAvatarAppearance({ ...seeded, skinTone: findClosestSkinToneId(a.skin), customColors: normalizeCustomColors({ skin: a.skin, hair: a.hair, shirt: a.shirt, sleeve: a.sleeve, pants: a.pants, shoe: a.shoe }) });
+		}
+
+		function normalizeAvatarAppearance(a) {
+			if (!a) return createAvatarAppearance();
+			if (a.skin !== undefined || a.shirt !== undefined || a.sleeve !== undefined) return normalizeLegacyAvatarAppearance(a);
+			const gender = ensureOptionId(a.gender, AVATAR_GENDER_OPTIONS, AVATAR_GENDER_OPTIONS[0].id);
+			const pOpts = filterOptionsByGender(AVATAR_PALETTES, gender);
+			const hOpts = filterOptionsByGender(AVATAR_HAIR_STYLES, gender);
+			const oOpts = filterOptionsByGender(AVATAR_OUTFIT_STYLES, gender);
+			const bOpts = filterOptionsByGender(AVATAR_BOTTOM_STYLES, gender);
+			const sOpts = filterOptionsByGender(AVATAR_SHOE_STYLES, gender);
+			return {
+				gender,
+				paletteId: ensureOptionId(a.paletteId, pOpts, pOpts[0].id),
+				skinTone: ensureOptionId(a.skinTone, AVATAR_SKIN_TONES, AVATAR_SKIN_TONES[0].id),
+				faceShape: ensureOptionId(a.faceShape, AVATAR_FACE_SHAPES, AVATAR_FACE_SHAPES[0].id),
+				eyeStyle: ensureOptionId(a.eyeStyle, AVATAR_EYE_STYLES, AVATAR_EYE_STYLES[0].id),
+				mouthStyle: ensureOptionId(a.mouthStyle, AVATAR_MOUTH_STYLES, AVATAR_MOUTH_STYLES[0].id),
+				hairStyle: ensureOptionId(a.hairStyle, hOpts, hOpts[0].id),
+				outfitStyle: ensureOptionId(a.outfitStyle, oOpts, oOpts[0].id),
+				bottomStyle: ensureOptionId(a.bottomStyle, bOpts, bOpts[0].id),
+				shoeStyle: ensureOptionId(a.shoeStyle, sOpts, sOpts[0].id),
+				customColors: normalizeCustomColors(a.customColors)
+			};
+		}
+
+		function getOptionLabel(options, id) {
+			const o = findOptionById(options, id);
+			return o ? o.label : '';
+		}
+
+		function getAvatarPalette(appearance) {
+			const n = normalizeAvatarAppearance(appearance);
+			return findOptionById(AVATAR_PALETTES, n.paletteId) || filterOptionsByGender(AVATAR_PALETTES, n.gender)[0];
+		}
+
+		function getSkinTone(appearance) {
+			const n = normalizeAvatarAppearance(appearance);
+			return findOptionById(AVATAR_SKIN_TONES, n.skinTone) || AVATAR_SKIN_TONES[0];
+		}
+
+		function resolveAvatarColors(appearance) {
+			const n = normalizeAvatarAppearance(appearance);
+			const palette = getAvatarPalette(n);
+			const tone = getSkinTone(n);
+			return { skin: tone.color, blush: tone.blush, hair: palette.hair, shirt: palette.shirt, sleeve: palette.sleeve, pants: palette.pants, shoe: palette.shoe, accent: palette.accent, ...(n.customColors || {}) };
+		}
+
+		function getAvatarGenderLabel(appearance) {
+			return getOptionLabel(AVATAR_GENDER_OPTIONS, normalizeAvatarAppearance(appearance).gender);
+		}
+
+		function renderHairPieces(hairStyle) {
+			switch (hairStyle) {
+				case 'side-sweep': return '<div class="hair-piece side-lock"></div>';
+				case 'sprout': return '<div class="hair-piece sprout-stem"></div><div class="hair-piece sprout-leaf"></div>';
+				case 'wave': return '<div class="hair-piece side-lock"></div><div class="hair-piece wave-crest"></div>';
+				case 'bob': return '<div class="hair-piece side-lock"></div>';
+				case 'pony': return '<div class="hair-piece pony-tail"></div>';
+				case 'twin-buns': return '<div class="hair-piece bun-left"></div><div class="hair-piece bun-right"></div>';
+				case 'braid': return '<div class="hair-piece braid-left"></div><div class="hair-piece braid-right"></div>';
+				case 'cloud': return '<div class="hair-piece cloud-left"></div><div class="hair-piece cloud-right"></div>';
+				case 'puff': return '<div class="hair-piece cloud-left"></div><div class="hair-piece cloud-right"></div>';
+				default: return '';
+			}
+		}
+
+		function renderOutfitDetails(outfitStyle) {
+			switch (outfitStyle) {
+				case 'school': return '<div class="outfit-detail tie"></div><div class="outfit-detail button-line"></div>';
+				case 'cardigan': return '<div class="outfit-detail badge"></div>';
+				case 'dino': return '<div class="outfit-detail spike"></div><div class="outfit-detail spike-two"></div><div class="outfit-detail spike-three"></div>';
+				case 'tee': return '<div class="outfit-detail tee-stripe"></div>';
+				case 'crop-tee': return '<div class="outfit-detail tee-stripe"></div><div class="outfit-detail crop-band"></div>';
+				case 'camisole': return '<div class="outfit-detail cami-strap-left"></div><div class="outfit-detail cami-strap-right"></div><div class="outfit-detail cami-heart"></div>';
+				case 'basketball': return '<div class="outfit-detail sport-band"></div><div class="outfit-detail sport-number"></div>';
+				case 'sweater-vest': return '<div class="outfit-detail vest-line"></div><div class="outfit-detail badge"></div>';
+				case 'sailor': return '<div class="outfit-detail ribbon"></div>';
+				case 'off-shoulder': return '<div class="outfit-detail off-band"></div><div class="outfit-detail ribbon"></div>';
+				case 'overall': return '<div class="outfit-detail strap-left"></div><div class="outfit-detail strap-right"></div><div class="outfit-detail pocket"></div>';
+				case 'cape': return '<div class="back-accessory cape"></div><div class="outfit-detail badge"></div>';
+				case 'party': return '<div class="outfit-detail ribbon"></div><div class="outfit-detail button-line"></div>';
+				case 'hoodie': return '<div class="outfit-detail pocket"></div>';
+				default: return '';
+			}
+		}
+
+		function renderLowerDetails(bottomStyle) {
+			switch (bottomStyle) {
+				case 'skirt': return '<div class="lower-detail skirt"></div>';
+				case 'dress-hem': return '<div class="lower-detail dress-hem"></div>';
+				case 'bloomer': return '<div class="lower-detail bloomer"></div>';
+				default: return '';
+			}
+		}
+
+		function renderAvatarMarkup(avatarAppearance) {
+			const ap = normalizeAvatarAppearance(avatarAppearance);
+			const c = resolveAvatarColors(ap);
+			return `
+				<div class="avatar-body gender-${ap.gender}" style="--skin:${c.skin};--hair:${c.hair};--shirt:${c.shirt};--sleeve:${c.sleeve};--pants:${c.pants};--shoe:${c.shoe};--accent:${c.accent};--blush:${c.blush};">
+					<div class="avatar head face-${ap.faceShape}">
+						<div class="hair style-${ap.hairStyle}"></div>
+						${renderHairPieces(ap.hairStyle)}
+						<div class="eye left eye-${ap.eyeStyle}"></div>
+						<div class="eye right eye-${ap.eyeStyle}"></div>
+						<div class="cheek left"></div>
+						<div class="cheek right"></div>
+						<div class="mouth mouth-${ap.mouthStyle}"></div>
+					</div>
+					${renderOutfitDetails(ap.outfitStyle)}
+					<div class="avatar torso outfit-${ap.outfitStyle}"></div>
+					<div class="arm left outfit-${ap.outfitStyle}"></div>
+					<div class="arm right outfit-${ap.outfitStyle}"></div>
+					${renderLowerDetails(ap.bottomStyle)}
+					<div class="leg left bottom-${ap.bottomStyle}"><div class="shoe shoe-${ap.shoeStyle}"></div></div>
+					<div class="leg right bottom-${ap.bottomStyle}"><div class="shoe shoe-${ap.shoeStyle}"></div></div>
+				</div>
+			`;
+		}
+
+		function buildAvatarSummary(avatarAppearance) {
+			const ap = normalizeAvatarAppearance(avatarAppearance);
+			return [
+				getOptionLabel(AVATAR_PALETTES, ap.paletteId),
+				getOptionLabel(AVATAR_HAIR_STYLES, ap.hairStyle),
+				getOptionLabel(AVATAR_OUTFIT_STYLES, ap.outfitStyle),
+				getOptionLabel(AVATAR_BOTTOM_STYLES, ap.bottomStyle),
+				getOptionLabel(AVATAR_SHOE_STYLES, ap.shoeStyle)
+			].filter(Boolean).join(' / ');
+		}
+
+		/* ========== API Helpers ========== */
+		function getDeviceId() {
+			let id = localStorage.getItem('device_id');
+			if (!id) { id = 'dev_' + Math.random().toString(36).slice(2, 12) + '_' + Date.now().toString(36); localStorage.setItem('device_id', id); }
+			return id;
+		}
+
+		function getStoredLoggedInUser() {
+			try { return JSON.parse(localStorage.getItem(LOGIN_STORAGE_KEY)); } catch { return null; }
+		}
+
+		async function postJson(url, payload) {
+			const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+			const data = await res.json();
+			if (!res.ok) throw new Error(data.error || '请求失败');
+			return data;
+		}
+
+		/* ========== Login / Logout ========== */
+		function openLoginModal() {
+			document.getElementById('loginModal').classList.add('open');
+			document.getElementById('loginModal').setAttribute('aria-hidden', 'false');
+			document.getElementById('loginError').textContent = '';
+			document.getElementById('loginUsername').value = '';
+			document.getElementById('loginPassword').value = '';
+			setTimeout(() => document.getElementById('loginUsername').focus(), 80);
+		}
+
+		function closeLoginModal() {
+			document.getElementById('loginModal').classList.remove('open');
+			document.getElementById('loginModal').setAttribute('aria-hidden', 'true');
+		}
+
+		async function handleLogin() {
+			const username = document.getElementById('loginUsername').value.trim();
+			const password = document.getElementById('loginPassword').value.trim();
+			const errorEl = document.getElementById('loginError');
+			if (!username || !password) { errorEl.textContent = '请输入用户名和密码'; return; }
+			errorEl.textContent = '';
+
+			try {
+				// Try permanent login first, then registered
+				let loginResult = null;
+				try {
+					loginResult = await postJson('/api/login', { username, password, deviceId: getDeviceId() });
+				} catch {
+					loginResult = await postJson('/api/registered-stu/login', { username, password, deviceId: getDeviceId() });
+				}
+
+				const userData = { username, password, deviceId: getDeviceId() };
+				localStorage.setItem(LOGIN_STORAGE_KEY, JSON.stringify(userData));
+				state.loggedIn = true;
+				state.user = userData;
+				closeLoginModal();
+				await loadProfile();
+				renderPage();
+			} catch (err) {
+				errorEl.textContent = err.message || '登录失败';
+			}
+		}
+
+		function handleLogout() {
+			const user = getStoredLoggedInUser();
+			if (user) {
+				fetch('/api/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: user.username }) }).catch(() => {});
+			}
+			localStorage.removeItem(LOGIN_STORAGE_KEY);
+			state.loggedIn = false;
+			state.user = null;
+			state.profile = null;
+			state.myPets = [];
+			renderPage();
+		}
+
+		/* ========== Load Profile ========== */
+		async function loadProfile() {
+			if (!state.user) return;
+			try {
+				const data = await postJson('/api/gameself/choose-profile', {
+					username: state.user.username,
+					password: state.user.password,
+					deviceId: state.user.deviceId || getDeviceId()
+				});
+				state.profile = data.profile;
+			} catch (err) {
+				console.error('加载个人数据失败:', err.message);
+				if (err.message.includes('登录') || err.message.includes('密码') || err.message.includes('设备')) {
+					handleLogout();
+					return;
+				}
+				state.profile = null;
+			}
+		}
+
+		/* ========== Render Page ========== */
+		function renderPage() {
+			const loginBtn = document.getElementById('loginBtn');
+			const logoutBtn = document.getElementById('logoutBtn');
+			const userInfoArea = document.getElementById('userInfoArea');
+			const loginPromptArea = document.getElementById('loginPromptArea');
+			const profileArea = document.getElementById('profileArea');
+
+			if (state.loggedIn && state.user) {
+				loginBtn.style.display = 'none';
+				logoutBtn.style.display = '';
+				userInfoArea.style.display = '';
+
+				const profile = state.profile;
+				document.getElementById('displayUsername').textContent = profile ? profile.displayName : state.user.username;
+				document.getElementById('displayUserId').textContent = profile && profile.userId ? `(${profile.userId})` : '';
+
+				loginPromptArea.style.display = 'none';
+				profileArea.style.display = '';
+
+				renderAvatar();
+				renderActivityData();
+				loadMyPets();
+			} else {
+				loginBtn.style.display = '';
+				logoutBtn.style.display = 'none';
+				userInfoArea.style.display = 'none';
+
+				loginPromptArea.style.display = '';
+				profileArea.style.display = 'none';
+			}
+		}
+
+		function renderAvatar() {
+			const container = document.getElementById('avatarContainer');
+			const summaryEl = document.getElementById('avatarSummaryText');
+			const noDataHint = document.getElementById('noChooseDataHint');
+			const dressBtn = document.getElementById('dressBtn');
+			const profile = state.profile;
+
+			if (profile && profile.hasChooseData && profile.avatarAppearance) {
+				const appearance = normalizeAvatarAppearance(profile.avatarAppearance);
+				container.innerHTML = renderAvatarMarkup(appearance);
+				summaryEl.textContent = `${getAvatarGenderLabel(appearance)} · ${buildAvatarSummary(appearance)}`;
+				noDataHint.style.display = 'none';
+				dressBtn.style.display = '';
+			} else {
+				container.innerHTML = renderAvatarMarkup(createDefaultAvatarAppearance());
+				summaryEl.textContent = '';
+				noDataHint.style.display = profile && !profile.hasChooseData ? '' : 'none';
+				dressBtn.style.display = profile && profile.hasChooseData ? '' : 'none';
+			}
+		}
+
+		function renderActivityData() {
+			const profile = state.profile;
+			document.getElementById('candyCountValue').textContent = profile ? profile.candyCount : 0;
+			document.getElementById('petFoodCountValue').textContent = profile ? (profile.petFoodCount || 0) : 0;
+			const autoFeedBtn = document.getElementById('autoFeedBtn');
+			if (autoFeedBtn) autoFeedBtn.style.display = (state.loggedIn && state.myPets.length > 0) ? '' : 'none';
+		}
+
+		function openFeedModalShell() {
+			const modal = document.getElementById('feedModal');
+			modal.classList.add('open');
+			modal.setAttribute('aria-hidden', 'false');
+		}
+
+		function closeFeedModal() {
+			const modal = document.getElementById('feedModal');
+			modal.classList.remove('open');
+			modal.setAttribute('aria-hidden', 'true');
+			resetFeedModalState();
+		}
+
+		/* ========== Auto Feed Modal ========== */
+		function openAutoFeedModal() {
+			const modal = document.getElementById('autoFeedModal');
+			modal.classList.add('open');
+			modal.setAttribute('aria-hidden', 'false');
+			document.getElementById('autoFeedStatus').textContent = '';
+			document.getElementById('autoFeedStatus').className = 'auto-feed-status';
+			document.getElementById('autoFeedSaveBtn').disabled = false;
+			loadAutoFeedConfig();
+		}
+
+		function closeAutoFeedModal() {
+			const modal = document.getElementById('autoFeedModal');
+			modal.classList.remove('open');
+			modal.setAttribute('aria-hidden', 'true');
+		}
+
+		async function loadAutoFeedConfig() {
+			const listEl = document.getElementById('autoFeedPetList');
+			listEl.innerHTML = '<div class="feed-loading">正在加载配置...</div>';
+			try {
+				const result = await postJson('/api/gameself/auto-feed-config/list', {
+					username: state.user.username,
+					password: state.user.password,
+					deviceId: state.user.deviceId || getDeviceId()
+				});
+				const pets = result.pets || [];
+				if (pets.length === 0) {
+					listEl.innerHTML = '<div class="feed-empty-tip">暂无宠物</div>';
+					return;
+				}
+				listEl.innerHTML = pets.map(pet => {
+					const satiety = Number(pet.satiety).toFixed(1);
+					const checkId = `af-enable-${pet.id}`;
+					return `
+						<div class="auto-feed-pet-row">
+							<div class="auto-feed-pet-name">
+								<div class="pet-title">${escapeHtml(pet.petTypeName || pet.petName || '宠物')}</div>
+								<div class="pet-sub">当前饱腹值 ${satiety}/100 &nbsp;·&nbsp; Lv.${pet.level}</div>
+							</div>
+							<div class="auto-feed-threshold-box">
+								<label>低于</label>
+								<input class="auto-feed-threshold-input" type="number" min="0" max="100" step="1"
+									value="${pet.threshold}" data-pet-id="${pet.id}">
+								<label>时喂食</label>
+							</div>
+							<div class="auto-feed-toggle">
+								<input type="checkbox" id="${checkId}" data-pet-id="${pet.id}" ${pet.enabled ? 'checked' : ''}>
+								<label for="${checkId}">开启</label>
+							</div>
+						</div>
+					`;
+				}).join('');
+			} catch (err) {
+				listEl.innerHTML = `<div class="feed-error">加载失败：${escapeHtml(err.message)}</div>`;
+			}
+		}
+
+		async function saveAutoFeedConfig() {
+			const saveBtn = document.getElementById('autoFeedSaveBtn');
+			const statusEl = document.getElementById('autoFeedStatus');
+			const rows = document.querySelectorAll('.auto-feed-pet-row');
+			if (!rows.length) return;
+
+			const configs = [];
+			rows.forEach(row => {
+				const thresholdInput = row.querySelector('.auto-feed-threshold-input');
+				const checkbox = row.querySelector('input[type=checkbox]');
+				if (!thresholdInput) return;
+				const petId = thresholdInput.getAttribute('data-pet-id');
+				const threshold = Math.min(100, Math.max(0, Math.round(Number(thresholdInput.value) || 0)));
+				const enabled = checkbox ? checkbox.checked : true;
+				configs.push({ petId, threshold, enabled });
+			});
+
+			saveBtn.disabled = true;
+			statusEl.textContent = '保存中...';
+			statusEl.className = 'auto-feed-status';
+			try {
+				await postJson('/api/gameself/auto-feed-config/save', {
+					username: state.user.username,
+					password: state.user.password,
+					deviceId: state.user.deviceId || getDeviceId(),
+					configs
+				});
+				statusEl.textContent = '✅ 设置已保存，后台将按计划自动喂食。';
+				statusEl.className = 'auto-feed-status success';
+			} catch (err) {
+				statusEl.textContent = `保存失败：${err.message}`;
+				statusEl.className = 'auto-feed-status error';
+			} finally {
+				saveBtn.disabled = false;
+			}
+		}
+
+		function getFeedSelectableMax(feedType) {
+			const config = FEED_UI_CONFIG[feedType];
+			const weeklyQuota = state.feedModal.weeklyQuota || {};
+			const quotaInfo = weeklyQuota[feedType] || {};
+			const inventoryCount = Number(state.feedModal.inventory?.[config.inventoryKey] || 0);
+			const remaining = Number(quotaInfo.remaining || 0);
+			return Math.max(0, Math.min(inventoryCount, remaining));
+		}
+
+		function getFeedRequestedTotalSatiety() {
+			return Object.keys(FEED_UI_CONFIG).reduce((sum, feedType) => {
+				const quantity = Number(state.feedModal.quantities[feedType] || 0);
+				return sum + (FEED_UI_CONFIG[feedType].satietyDelta * quantity);
+			}, 0);
+		}
+
+		function setFeedQuantity(feedType, value) {
+			const safeValue = Math.max(0, Math.min(getFeedSelectableMax(feedType), Math.floor(Number(value) || 0)));
+			state.feedModal.quantities[feedType] = safeValue;
+			state.feedModal.errorMessage = '';
+			renderFeedModal();
+		}
+
+		function changeFeedQuantity(feedType, delta) {
+			setFeedQuantity(feedType, Number(state.feedModal.quantities[feedType] || 0) + delta);
+		}
+
+		function renderFeedModal() {
+			const titleEl = document.getElementById('feedModalTitle');
+			const subtitleEl = document.getElementById('feedModalSubtitle');
+			const currentSatietyEl = document.getElementById('feedCurrentSatiety');
+			const projectedSatietyEl = document.getElementById('feedProjectedSatiety');
+			const errorEl = document.getElementById('feedModalError');
+			const foodListEl = document.getElementById('feedFoodList');
+			const confirmBtn = document.getElementById('feedConfirmBtn');
+
+			const petName = state.feedModal.petName || '宠物';
+			titleEl.textContent = `正在对${petName}进行喂食`;
+			subtitleEl.textContent = state.feedModal.petTypeName
+				? `${state.feedModal.petTypeName}本周可使用配额会按当前这只宠物单独计算。`
+				: '本周可使用配额会按当前这只宠物单独计算。';
+
+			const currentSatiety = Number(state.feedModal.satiety || 0);
+			const projectedSatiety = Math.min(100, currentSatiety + getFeedRequestedTotalSatiety());
+			currentSatietyEl.textContent = `${formatPetStatDisplay(currentSatiety)}/100`;
+			projectedSatietyEl.textContent = `${formatPetStatDisplay(projectedSatiety)}/100`;
+			errorEl.textContent = state.feedModal.errorMessage || '';
+
+			if (state.feedModal.loading) {
+				foodListEl.innerHTML = '<div class="feed-loading">正在加载喂食信息...</div>';
+				confirmBtn.disabled = true;
+				confirmBtn.textContent = '确认喂食';
+				return;
+			}
+
+			if (!state.feedModal.weeklyQuota) {
+				foodListEl.innerHTML = '<div class="feed-empty-tip">暂时无法获取喂食信息，请稍后重试。</div>';
+				confirmBtn.disabled = true;
+				confirmBtn.textContent = '确认喂食';
+				return;
+			}
+
+			foodListEl.innerHTML = Object.keys(FEED_UI_CONFIG).map(feedType => {
+				const uiConfig = FEED_UI_CONFIG[feedType];
+				const quotaInfo = state.feedModal.weeklyQuota[feedType] || { remaining: 0, weeklyLimit: 0 };
+				const inventoryCount = Number(state.feedModal.inventory?.[uiConfig.inventoryKey] || 0);
+				const quantity = Number(state.feedModal.quantities[feedType] || 0);
+				const maxSelectable = getFeedSelectableMax(feedType);
+				const disableMinus = quantity <= 0 || state.feedModal.submitting;
+				const disablePlus = quantity >= maxSelectable || state.feedModal.submitting;
+				const disableInput = maxSelectable <= 0 || state.feedModal.submitting;
+				return `
+					<div class="feed-food-item">
+						<div class="feed-food-main">
+							<div class="feed-food-title">${escapeHtml(uiConfig.label)}</div>
+							<div class="feed-food-desc">每个增加当前宠物 ${uiConfig.satietyDelta} 点饱腹值。</div>
+							<div class="feed-food-meta">
+								<span class="feed-meta-tag">本周剩余 ${quotaInfo.remaining} / ${quotaInfo.weeklyLimit}</span>
+								<span class="feed-meta-tag">当前库存 ${inventoryCount}</span>
+							</div>
+						</div>
+						<div class="feed-quantity-box">
+							<button class="feed-qty-btn" type="button" data-feed-action="decrease" data-feed-type="${feedType}" ${disableMinus ? 'disabled' : ''}>-</button>
+							<input class="feed-qty-input" type="number" min="0" max="${maxSelectable}" step="1" value="${quantity}" data-feed-input="${feedType}" ${disableInput ? 'disabled' : ''}>
+							<button class="feed-qty-btn" type="button" data-feed-action="increase" data-feed-type="${feedType}" ${disablePlus ? 'disabled' : ''}>+</button>
+						</div>
+					</div>
+				`;
+			}).join('');
+
+			const hasSelectedFood = Object.values(state.feedModal.quantities).some(quantity => Number(quantity) > 0);
+			confirmBtn.disabled = state.feedModal.submitting || !hasSelectedFood;
+			confirmBtn.textContent = state.feedModal.submitting ? '喂食中...' : '确认喂食';
+		}
+
+		async function openFeedModalForCurrentPet() {
+			if (!state.loggedIn || !state.user) {
+				openLoginModal();
+				return;
+			}
+
+			const pet = getCurrentMyPet();
+			if (!pet || !pet.id || !pet.pet_type) {
+				alert('当前展示的宠物暂时不能进行喂食。');
+				return;
+			}
+
+			resetFeedModalState();
+			state.feedModal.petId = Number(pet.id);
+			state.feedModal.petName = pet.pet_name || pet.pet_type_name || '宠物';
+			state.feedModal.petTypeName = pet.pet_type_name || '';
+			state.feedModal.satiety = Number(pet.satiety) || 0;
+			state.feedModal.loading = true;
+			openFeedModalShell();
+			renderFeedModal();
+
+			try {
+				const result = await postJson('/api/gameself/feed-pet-status', {
+					username: state.user.username,
+					password: state.user.password,
+					deviceId: state.user.deviceId || getDeviceId(),
+					petId: pet.id
+				});
+				state.feedModal.petId = result.pet.id;
+				state.feedModal.petName = result.pet.name || pet.pet_name || pet.pet_type_name || '宠物';
+				state.feedModal.petTypeName = result.pet.typeName || pet.pet_type_name || '';
+				state.feedModal.satiety = Number(result.pet.satiety) || 0;
+				state.feedModal.inventory = {
+					candyCount: Number(result.inventory?.candyCount || 0),
+					petFoodCount: Number(result.inventory?.petFoodCount || 0)
+				};
+				state.feedModal.weeklyQuota = result.weeklyQuota || null;
+				state.feedModal.quantities = { pet_food: 0, candy: 0 };
+				state.feedModal.errorMessage = '';
+			} catch (err) {
+				closeFeedModal();
+				alert(err.message || '获取喂食信息失败');
+				return;
+			} finally {
+				state.feedModal.loading = false;
+			}
+
+			renderFeedModal();
+		}
+
+		async function submitFeedPets() {
+			if (state.feedModal.submitting || !state.user || !state.feedModal.petId) return;
+			const foods = Object.keys(FEED_UI_CONFIG).reduce((acc, feedType) => {
+				acc[feedType] = Math.max(0, Math.floor(Number(state.feedModal.quantities[feedType] || 0)));
+				return acc;
+			}, {});
+			if (!Object.values(foods).some(quantity => quantity > 0)) return;
+
+			state.feedModal.submitting = true;
+			state.feedModal.errorMessage = '';
+			renderFeedModal();
+
+			try {
+				const result = await postJson('/api/gameself/feed-pet', {
+					username: state.user.username,
+					password: state.user.password,
+					deviceId: state.user.deviceId || getDeviceId(),
+					petId: state.feedModal.petId,
+					foods
+				});
+
+				if (state.profile) {
+					state.profile.candyCount = Number(result.inventory?.candyCount || 0);
+					state.profile.petFoodCount = Number(result.inventory?.petFoodCount || 0);
+				}
+
+				const petIndex = state.myPets.findIndex(pet => Number(pet.id) === Number(result.fed?.pet_id));
+				if (petIndex >= 0) {
+					state.myPets[petIndex] = {
+						...state.myPets[petIndex],
+						satiety: Number(result.fed?.newSatiety || state.myPets[petIndex].satiety)
+					};
+				}
+
+				renderActivityData();
+				renderPetCard();
+				closeFeedModal();
+			} catch (err) {
+				state.feedModal.submitting = false;
+				state.feedModal.errorMessage = err.message || '喂食失败';
+				renderFeedModal();
+			}
+		}
+
+		/* ========== Dress Editor ========== */
+		function setSelectOptions(selectEl, options, value) {
+			selectEl.innerHTML = options.map(o => {
+				const sel = o.id === value ? 'selected' : '';
+				return `<option value="${escapeHtml(o.id)}" ${sel}>${escapeHtml(o.label)}</option>`;
+			}).join('');
+		}
+
+		function renderDressControls() {
+			const d = state.dressDraft;
+			if (!d) return;
+			setSelectOptions(document.getElementById('dressGenderSelect'), AVATAR_GENDER_OPTIONS, d.gender);
+			setSelectOptions(document.getElementById('dressPaletteSelect'), filterOptionsByGender(AVATAR_PALETTES, d.gender), d.paletteId);
+			setSelectOptions(document.getElementById('dressSkinToneSelect'), AVATAR_SKIN_TONES, d.skinTone);
+			setSelectOptions(document.getElementById('dressFaceShapeSelect'), AVATAR_FACE_SHAPES, d.faceShape);
+			setSelectOptions(document.getElementById('dressEyeStyleSelect'), AVATAR_EYE_STYLES, d.eyeStyle);
+			setSelectOptions(document.getElementById('dressMouthStyleSelect'), AVATAR_MOUTH_STYLES, d.mouthStyle);
+			setSelectOptions(document.getElementById('dressHairStyleSelect'), filterOptionsByGender(AVATAR_HAIR_STYLES, d.gender), d.hairStyle);
+			setSelectOptions(document.getElementById('dressOutfitStyleSelect'), filterOptionsByGender(AVATAR_OUTFIT_STYLES, d.gender), d.outfitStyle);
+			setSelectOptions(document.getElementById('dressBottomStyleSelect'), filterOptionsByGender(AVATAR_BOTTOM_STYLES, d.gender), d.bottomStyle);
+			setSelectOptions(document.getElementById('dressShoeStyleSelect'), filterOptionsByGender(AVATAR_SHOE_STYLES, d.gender), d.shoeStyle);
+		}
+
+		function renderDressPreview() {
+			const d = state.dressDraft;
+			if (!d) return;
+			document.getElementById('dressPreviewStage').innerHTML = `<div class="avatar-wrap">${renderAvatarMarkup(d)}</div>`;
+			document.getElementById('dressPreviewName').textContent = state.profile ? state.profile.displayName : '';
+			document.getElementById('dressPreviewSummary').textContent = `${getAvatarGenderLabel(d)} · ${buildAvatarSummary(d)}`;
+		}
+
+		function renderDressEditor() {
+			renderDressControls();
+			renderDressPreview();
+		}
+
+		function openDressModal() {
+			if (!state.profile || !state.profile.hasChooseData) return;
+			state.dressDraft = normalizeAvatarAppearance(state.profile.avatarAppearance);
+			renderDressEditor();
+			document.getElementById('dressModal').classList.add('open');
+			document.getElementById('dressModal').setAttribute('aria-hidden', 'false');
+		}
+
+		function closeDressModal() {
+			document.getElementById('dressModal').classList.remove('open');
+			document.getElementById('dressModal').setAttribute('aria-hidden', 'true');
+			state.dressDraft = null;
+		}
+
+		function updateDressDraft(field, value) {
+			if (!state.dressDraft) return;
+			const current = state.dressDraft;
+			if (field === 'gender') {
+				state.dressDraft = normalizeAvatarAppearance({ ...createDefaultAvatarAppearance(value), ...current, gender: value, customColors: null });
+			} else {
+				state.dressDraft = normalizeAvatarAppearance({ ...current, [field]: value, customColors: null });
+			}
+			renderDressEditor();
+		}
+
+		function randomizeDressDraft() {
+			if (!state.dressDraft) return;
+			state.dressDraft = createAvatarAppearance(Math.random, state.dressDraft.gender);
+			renderDressEditor();
+		}
+
+		function resetDressDraft() {
+			if (!state.dressDraft) return;
+			state.dressDraft = createDefaultAvatarAppearance(state.dressDraft.gender);
+			renderDressEditor();
+		}
+
+		async function saveDressDraft() {
+			if (!state.dressDraft || !state.user || !state.profile) return;
+			const COST = 5;
+			if (state.profile.candyCount < COST) {
+				alert(`保存形象需要 ${COST} 个糖果，但你目前只有 ${state.profile.candyCount} 个。`);
+				return;
+			}
+			try {
+				const result = await postJson('/api/gameself/choose-avatar', {
+					username: state.user.username,
+					password: state.user.password,
+					deviceId: state.user.deviceId || getDeviceId(),
+					avatarAppearance: state.dressDraft
+				});
+				state.profile.avatarAppearance = result.avatarAppearance;
+				state.profile.candyCount = result.candyCount;
+				closeDressModal();
+				renderAvatar();
+				renderActivityData();
+			} catch (err) {
+				alert(err.message || '保存形象失败');
+			}
+		}
+
+		/* ========== Dress Select Event Binding ========== */
+		function bindDressSelectEvents() {
+			const fields = [
+				['dressGenderSelect', 'gender'],
+				['dressPaletteSelect', 'paletteId'],
+				['dressSkinToneSelect', 'skinTone'],
+				['dressFaceShapeSelect', 'faceShape'],
+				['dressEyeStyleSelect', 'eyeStyle'],
+				['dressMouthStyleSelect', 'mouthStyle'],
+				['dressHairStyleSelect', 'hairStyle'],
+				['dressOutfitStyleSelect', 'outfitStyle'],
+				['dressBottomStyleSelect', 'bottomStyle'],
+				['dressShoeStyleSelect', 'shoeStyle']
+			];
+			fields.forEach(([elId, field]) => {
+				document.getElementById(elId).addEventListener('change', function () {
+					updateDressDraft(field, this.value);
+				});
+			});
+		}
+
+		/* ========== Adopt Modal (学生端复用领养逻辑) ========== */
+		state.adopt = { petTypes: [], selectedType: null, loading: false };
+
+		async function ensurePetTypesLoadedForGameself() {
+			if (state.adopt.petTypes && state.adopt.petTypes.length > 0) return state.adopt.petTypes;
+			const res = await fetch('/api/petgarden/pet/types');
+			const data = await res.json();
+			if (!data || !Array.isArray(data.types)) throw new Error(data && data.error ? data.error : '加载宠物类型失败');
+			state.adopt.petTypes = data.types || [];
+			return state.adopt.petTypes;
+		}
+
+		function renderPetTypeGrid() {
+			const grid = document.getElementById('petTypeGrid');
+			if (!grid) return;
+			if (!state.adopt.petTypes || state.adopt.petTypes.length === 0) {
+				grid.innerHTML = '<div class="feed-loading">暂无可用的宠物类型</div>';
+				return;
+			}
+			grid.innerHTML = state.adopt.petTypes.map(t => {
+				const imgPath = `/games/petgarden/pets/${t.folder}/${t.folder}01.png`;
+				const selected = state.adopt.selectedType === t.id ? 'box-shadow:0 0 0 3px rgba(67,160,71,0.12);border:2px solid #43a047;' : '';
+				return `
+				<div class="pet-type-item" data-pettype="${t.id}" style="cursor:pointer;border-radius:10px;background:rgba(255,255,255,0.94);padding:8px;display:flex;flex-direction:column;align-items:center;${selected}">
+					<div style="height:64px;display:flex;align-items:center;justify-content:center;">
+						<img src="${imgPath}" alt="${escapeHtml(t.name)}" style="max-width:100%;max-height:64px" onerror="this.parentElement.innerHTML='🐾'">
+					</div>
+					<div style="margin-top:6px;font-weight:700">${escapeHtml(t.name)}</div>
+				</div>`;
+			}).join('');
+		}
+
+		function selectAdoptPetType(typeId) {
+			state.adopt.selectedType = typeId;
+			document.getElementById('confirmAdoptBtn').disabled = !typeId;
+			renderPetTypeGrid();
+		}
+
+		function openAdoptModalForCurrentPet() {
+			if (!state.loggedIn || !state.user) { openLoginModal(); return; }
+			const pet = getCurrentMyPet();
+			if (!pet) { alert('未找到当前宠物'); return; }
+			if (pet.pet_type) {
+				alert('当前宠物已领养，若要更换请在宠物管理页面操作。');
+				return;
+			}
+			state.adopt.selectedType = null;
+			document.getElementById('confirmAdoptBtn').disabled = true;
+			const grid = document.getElementById('petTypeGrid');
+			if (grid) grid.innerHTML = '<div class="feed-loading">正在加载宠物类型...</div>';
+			ensurePetTypesLoadedForGameself().then(() => {
+				renderPetTypeGrid();
+				const modal = document.getElementById('adoptModal');
+				if (modal) { modal.classList.add('open'); modal.setAttribute('aria-hidden', 'false'); }
+			}).catch(err => {
+				alert(err.message || '加载宠物类型失败');
+			});
+		}
+
+		function closeAdoptModal() {
+			const modal = document.getElementById('adoptModal');
+			if (modal) { modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true'); }
+			state.adopt.selectedType = null;
+			document.getElementById('confirmAdoptBtn').disabled = true;
+		}
+
+		async function confirmAdoptForAccount() {
+			if (!state.loggedIn || !state.user) { openLoginModal(); return; }
+			const pet = getCurrentMyPet();
+			if (!pet || !pet.id) { alert('未找到当前宠物'); return; }
+			if (!state.adopt.selectedType) return;
+			document.getElementById('confirmAdoptBtn').disabled = true;
+			try {
+				const ensureRes = await postJson('/api/petgarden/student/ensure-for-account', {
+					username: state.user.username,
+					password: state.user.password,
+					deviceId: state.user.deviceId || getDeviceId()
+				});
+				const studentId = ensureRes.studentId;
+				await postJson('/api/petgarden/pet/adopt', {
+					student_id: studentId,
+					pet_id: pet.id,
+					pet_type: state.adopt.selectedType
+				});
+				alert('🎉 成功领养宠物！');
+				closeAdoptModal();
+				await loadMyPets();
+				await loadProfile();
+			} catch (err) {
+				alert(err.message || '领养失败');
+				document.getElementById('confirmAdoptBtn').disabled = false;
+			}
+		}
+
+		/* ========== Pet Card ========== */
+		async function loadMyPets() {
+			if (!state.user) return;
+			try {
+				const res = await fetch('/api/petgarden/my-pets?username=' + encodeURIComponent(state.user.username));
+				const data = await res.json();
+				if (data.success && Array.isArray(data.pets)) {
+					state.myPets = data.pets;
+					const curIdx = data.pets.findIndex(p => p.is_current);
+					state.currentPetIndex = curIdx >= 0 ? curIdx : 0;
+				} else {
+					state.myPets = [];
+				}
+			} catch {
+				state.myPets = [];
+			}
+			renderPetCard();
+			renderActivityData();
+		}
+
+		function formatPetStatDisplay(value) {
+			const n = Number(value);
+			if (!Number.isFinite(n)) return '0';
+			return Number.isInteger(n) ? String(n) : n.toFixed(1);
+		}
+
+		function getCurrentMyPet() {
+			const pets = state.myPets || [];
+			if (pets.length === 0) return null;
+			const safeIndex = ((state.currentPetIndex % pets.length) + pets.length) % pets.length;
+			return pets[safeIndex] || pets[0] || null;
+		}
+
+		function renderMyPetVisual(pet, petTypeName) {
+			if (pet && pet.pet_image) {
+				return `<img src="/${escapeHtml(pet.pet_image)}" alt="${escapeHtml(petTypeName)}" draggable="false" onerror="this.parentElement.innerHTML='<span class=pet-egg-placeholder>🐾</span>'">`;
+			}
+			return '<span class="pet-egg-placeholder">🥚</span>';
+		}
+
+		function renderMyPetCardLayer(pet, isMobile) {
+			const hasPet = !!(pet && pet.pet_type);
+			const petTypeName = hasPet ? (pet.pet_type_name || '') : '';
+			const growthValue = hasPet ? Number(pet.growth_value) || 0 : 0;
+			const maxGrowthValue = hasPet ? Math.max(1, Number(pet.max_growth_value) || 40) : 40;
+			const growthPct = hasPet ? Math.min(100, Math.round((growthValue / maxGrowthValue) * 100)) : 0;
+			const satietyValue = hasPet ? Number(pet.satiety) || 0 : 0;
+			const satietyPct = hasPet ? Math.min(100, Math.max(0, satietyValue)) : 0;
+
+			if (!hasPet) {
+				return `
+					<div class="pet-card-top">
+						<div class="pet-type-label">宠物蛋</div>
+					</div>
+					<div class="pet-visual">${renderMyPetVisual(pet, petTypeName)}</div>
+				`;
+			}
+
+			if (isMobile) {
+				return `
+					<div class="pet-card-top">
+						<div class="pet-type-label">${escapeHtml(petTypeName)}</div>
+						<div class="pet-level-chip">Lv.${pet.level || 0}</div>
+					</div>
+					<div class="pet-visual">${renderMyPetVisual(pet, petTypeName)}</div>
+					<div class="pet-stats">
+						<div class="pet-stat-row-mobile">
+							<div class="growth-bar-wrap"><div class="growth-bar" style="width:${growthPct}%"></div></div>
+						</div>
+						<div class="pet-stat-row-mobile">
+							<div class="pet-stat-label">成长值</div>
+							<div class="pet-stat-value">${formatPetStatDisplay(growthValue)}/${formatPetStatDisplay(maxGrowthValue)}</div>
+						</div>
+						<div class="pet-stat-row-mobile">
+							<div class="satiety-bar-wrap"><div class="satiety-bar" style="width:${satietyPct}%"></div></div>
+						</div>
+						<div class="pet-stat-row-mobile">
+							<div class="pet-stat-label">饱腹值</div>
+							<div class="pet-stat-value">${formatPetStatDisplay(satietyValue)}/100</div>
+						</div>
+					</div>
+				`;
+			}
+
+			return `
+				<div class="pet-card-top">
+					<div class="pet-type-label">${escapeHtml(petTypeName)}</div>
+					<div class="pet-level-chip">Lv.${pet.level || 0}</div>
+				</div>
+				<div class="pet-visual">${renderMyPetVisual(pet, petTypeName)}</div>
+				<div class="pet-stats">
+					<div class="pet-stat-row">
+						<div class="pet-stat-text">${formatPetStatDisplay(growthValue)}/${formatPetStatDisplay(maxGrowthValue)}</div>
+						<div class="growth-bar-wrap"><div class="growth-bar" style="width:${growthPct}%"></div></div>
+					</div>
+					<div class="pet-stat-row">
+						<div class="pet-stat-text">${formatPetStatDisplay(satietyValue)}/100</div>
+						<div class="satiety-bar-wrap"><div class="satiety-bar" style="width:${satietyPct}%"></div></div>
+					</div>
+				</div>
+			`;
+		}
+
+		function getMySwipeTargetPet(direction) {
+			const pets = state.myPets || [];
+			if (pets.length < 2) return null;
+			const nextIndex = (state.currentPetIndex + direction + pets.length) % pets.length;
+			return pets[nextIndex] || null;
+		}
+
+		function clearPetCardDragState(panel, settle = false) {
+			if (!panel) return;
+			panel.classList.remove('drag-active', 'preview-visible', 'preview-next', 'preview-prev', 'drag-settling', 'swiping');
+			if (!settle) panel.style.removeProperty('--drag-offset');
+			delete panel.dataset.previewPetIndex;
+			const preview = panel.querySelector('.pet-preview-layer');
+			if (preview) preview.innerHTML = '';
+		}
+
+		function updatePetCardDragPreview(panel, deltaX) {
+			if (!panel) return;
+			const preview = panel.querySelector('.pet-preview-layer');
+			if (!preview) return;
+			const absDelta = Math.abs(deltaX);
+			if (absDelta < 10) {
+				panel.style.setProperty('--drag-offset', '0px');
+				panel.classList.remove('drag-active', 'preview-visible', 'preview-next', 'preview-prev');
+				delete panel.dataset.previewPetIndex;
+				preview.innerHTML = '';
+				return;
+			}
+
+			const direction = deltaX < 0 ? 1 : -1;
+			const targetPet = getMySwipeTargetPet(direction);
+			if (!targetPet) {
+				clearPetCardDragState(panel);
+				return;
+			}
+
+			const pets = state.myPets || [];
+			const targetIndex = (state.currentPetIndex + direction + pets.length) % pets.length;
+			const dragOffset = Math.max(-128, Math.min(128, deltaX));
+			panel.style.setProperty('--drag-offset', `${dragOffset}px`);
+			panel.classList.add('drag-active', 'preview-visible');
+			panel.classList.toggle('preview-next', direction === 1);
+			panel.classList.toggle('preview-prev', direction === -1);
+
+			if (panel.dataset.previewPetIndex !== String(targetIndex)) {
+				const isMobile = window.matchMedia && window.matchMedia('(max-width:720px)').matches;
+				preview.innerHTML = `<div class="pet-card-layer">${renderMyPetCardLayer(targetPet, isMobile)}</div>`;
+				panel.dataset.previewPetIndex = String(targetIndex);
+			}
+		}
+
+		function switchCurrentPet(direction) {
+			const pets = state.myPets || [];
+			if (pets.length < 2) return;
+			state.currentPetIndex = (state.currentPetIndex + direction + pets.length) % pets.length;
+			renderPetCard();
+			const panel = document.getElementById('petCardPanel');
+			clearPetCardDragState(panel);
+		}
+
+		function renderPetCard() {
+			const panel = document.getElementById('petCardPanel');
+			const pets = state.myPets || [];
+			if (pets.length === 0) {
+				panel.classList.remove('can-swipe');
+				panel.innerHTML = '<div class="pet-no-data">🥚 暂未拥有宠物</div>';
+				return;
+			}
+			const pet = getCurrentMyPet();
+			const petsCount = pets.length;
+			const isMobile = window.matchMedia && window.matchMedia('(max-width:720px)').matches;
+
+			panel.classList.toggle('can-swipe', petsCount > 1);
+			const dotsHtml = petsCount > 1 ? '<div class="pet-dots">' + pets.map((_, i) => `<span class="${i === state.currentPetIndex ? 'active' : ''}"></span>`).join('') + '</div>' : '';
+			const actionsHtml = petsCount > 0 ? `<div class="pet-actions"><button type="button" class="btn btn-outline" data-action="adopt" data-pet-index="${state.currentPetIndex}">✨ 领养宠物</button><button type="button" class="btn btn-dress" data-action="feed" data-pet-index="${state.currentPetIndex}">🍖 喂食</button></div>` : '';
+			panel.innerHTML = `
+				<div class="pet-card-stack">
+					<div class="pet-preview-layer"></div>
+					<div class="pet-card-layer pet-current-layer">${renderMyPetCardLayer(pet, isMobile)}</div>
+				</div>
+				${dotsHtml}
+				${actionsHtml}
+			`;
+			// No direct handlers here — use delegated listeners on the panel (matches teacher page)
+		}
+
+		/* ========== Init ========== */
+		async function init() {
+			// Bind events
+			document.getElementById('loginBtn').addEventListener('click', openLoginModal);
+			document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+			const backBtn = document.getElementById('backBtn');
+			if (backBtn) backBtn.addEventListener('click', () => { window.location.href = '../index.html'; });
+			document.getElementById('dressBtn').addEventListener('click', openDressModal);
+			const autoFeedBtn = document.getElementById('autoFeedBtn');
+			if (autoFeedBtn) autoFeedBtn.addEventListener('click', openAutoFeedModal);
+			const autoFeedModal = document.getElementById('autoFeedModal');
+			if (autoFeedModal) {
+				autoFeedModal.addEventListener('click', e => {
+					if (e.target === autoFeedModal) closeAutoFeedModal();
+				});
+			}
+
+			const adoptModal = document.getElementById('adoptModal');
+			if (adoptModal) {
+				adoptModal.addEventListener('click', e => {
+					if (e.target === adoptModal) closeAdoptModal();
+				});
+				const grid = document.getElementById('petTypeGrid');
+				if (grid) {
+					grid.addEventListener('click', e => {
+						const item = e.target.closest('[data-pettype]');
+						if (!item) return;
+						selectAdoptPetType(item.getAttribute('data-pettype'));
+					});
+				}
+			}
+			const petCardPanel = document.getElementById('petCardPanel');
+			bindDressSelectEvents();
+
+			if (petCardPanel) {
+				petCardPanel.addEventListener('click', e => {
+					if (Date.now() < state.suppressPetClickUntil) return;
+					const adoptBtn = e.target.closest('[data-action="adopt"]');
+					if (adoptBtn) {
+						e.preventDefault();
+						openAdoptModalForCurrentPet();
+						return;
+					}
+					const feedBtn = e.target.closest('[data-action="feed"]');
+					if (feedBtn) {
+						e.preventDefault();
+						openFeedModalForCurrentPet();
+						return;
+					}
+				});
+
+				petCardPanel.addEventListener('dragstart', e => {
+					if (e.target.closest('.pet-card-panel')) e.preventDefault();
+				});
+				petCardPanel.addEventListener('selectstart', e => {
+					if (e.target.closest('.pet-card-panel')) e.preventDefault();
+				});
+
+				petCardPanel.addEventListener('pointerdown', e => {
+					if (e.button !== 0) return;
+					const panel = e.target.closest('.pet-card-panel.can-swipe');
+					if (!panel) return;
+					panel.classList.add('card-pressed', 'swiping');
+					state.petSwipeGesture = {
+						startX: e.clientX,
+						startY: e.clientY,
+						panel,
+						moved: false
+					};
+				});
+
+				document.addEventListener('pointermove', e => {
+					const gesture = state.petSwipeGesture;
+					if (!gesture) return;
+					const deltaX = e.clientX - gesture.startX;
+					const deltaY = e.clientY - gesture.startY;
+					if (Math.abs(deltaX) <= Math.abs(deltaY) && Math.abs(deltaX) < 10) return;
+					gesture.moved = gesture.moved || Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10;
+					updatePetCardDragPreview(gesture.panel, deltaX);
+				});
+
+				document.addEventListener('pointerup', e => {
+					document.querySelectorAll('.pet-card-panel.card-pressed').forEach(panel => {
+						setTimeout(() => panel.classList.remove('card-pressed'), 120);
+					});
+					const gesture = state.petSwipeGesture;
+					if (!gesture) return;
+					state.petSwipeGesture = null;
+					const deltaX = e.clientX - gesture.startX;
+					const deltaY = e.clientY - gesture.startY;
+					if (gesture.moved) state.suppressPetClickUntil = Date.now() + 180;
+					if (Math.abs(deltaX) < 42 || Math.abs(deltaX) <= Math.abs(deltaY)) {
+						clearPetCardDragState(gesture.panel);
+						return;
+					}
+					const direction = deltaX < 0 ? 1 : -1;
+					gesture.panel.classList.remove('drag-active');
+					gesture.panel.classList.add('drag-settling');
+					setTimeout(() => {
+						switchCurrentPet(direction);
+					}, 180);
+				});
+
+				document.addEventListener('pointercancel', () => {
+					document.querySelectorAll('.pet-card-panel.card-pressed').forEach(panel => panel.classList.remove('card-pressed'));
+					if (!state.petSwipeGesture) return;
+					clearPetCardDragState(state.petSwipeGesture.panel);
+					state.petSwipeGesture = null;
+				});
+			}
+
+			const feedModal = document.getElementById('feedModal');
+			if (feedModal) {
+				feedModal.addEventListener('click', e => {
+					if (e.target === feedModal) closeFeedModal();
+				});
+				feedModal.addEventListener('click', e => {
+					const actionBtn = e.target.closest('[data-feed-action]');
+					if (actionBtn) {
+						const feedType = actionBtn.getAttribute('data-feed-type');
+						const action = actionBtn.getAttribute('data-feed-action');
+						changeFeedQuantity(feedType, action === 'increase' ? 1 : -1);
+					}
+				});
+				feedModal.addEventListener('input', e => {
+					const input = e.target.closest('[data-feed-input]');
+					if (!input) return;
+					setFeedQuantity(input.getAttribute('data-feed-input'), input.value);
+				});
+			}
+
+			document.addEventListener('keydown', e => {
+				if (e.key === 'Escape') {
+					closeLoginModal();
+					closeDressModal();
+					closeFeedModal();
+					closeAutoFeedModal();
+				}
+			});
+
+			// Allow Enter key in login form
+			document.getElementById('loginPassword').addEventListener('keydown', e => {
+				if (e.key === 'Enter') handleLogin();
+			});
+			document.getElementById('loginUsername').addEventListener('keydown', e => {
+				if (e.key === 'Enter') document.getElementById('loginPassword').focus();
+			});
+
+			// Check existing login
+			const stored = getStoredLoggedInUser();
+			if (stored && stored.username && stored.password) {
+				state.loggedIn = true;
+				state.user = { username: stored.username, password: stored.password, deviceId: stored.deviceId || getDeviceId() };
+				renderPage();
+				await loadProfile();
+				renderPage();
+			} else {
+				renderPage();
+			}
+
+		}
+
+		init();
+	</script>
+</body>
+</html>
