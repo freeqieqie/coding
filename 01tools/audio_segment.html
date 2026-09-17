@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>自由的茄茄工具箱 - 音频逐句拆分器</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      background-color: #0d1e36;
+      color: #fff;
+      overflow-x: hidden;
+      overflow-y: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    html::-webkit-scrollbar, body::-webkit-scrollbar {
+      display: none;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+
+    /* 顶部 Header */
+    header {
+      height: 52px;
+      background: #09131f;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      flex-shrink: 0;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      font-weight: 700;
+      font-size: 16px;
+      color: #ffffff;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-developer {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #b0c7e2;
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-developer:hover {
+      background: rgba(0, 223, 182, 0.15);
+      border-color: #00dfb6;
+      color: #00dfb6;
+    }
+
+    /* 视图1：上传视图 */
+    #upload-view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      color: #1a1a1a;
+      padding: 40px 20px;
+      min-height: calc(100vh - 52px);
+    }
+    .upload-title {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      color: #0b1424;
+      text-align: center;
+    }
+    .upload-subtitle {
+      font-size: 15px;
+      color: #66768a;
+      margin-bottom: 32px;
+      text-align: center;
+      line-height: 1.5;
+    }
+    .btn-choose-file {
+      background: #0066ff;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      padding: 14px 42px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      transition: background 0.2s;
+    }
+    .btn-choose-file:hover { background: #0052cc; }
+    .drop-hint {
+      margin-top: 16px;
+      font-size: 13px;
+      color: #8c9ba5;
+      text-align: center;
+    }
+
+    /* 视图2：波形分析视图 */
+    #editor-view {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      background-color: #0d1e36;
+      width: 100%;
+    }
+
+    .editor-toolbar {
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      background: #0b172a;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 13px;
+      color: #6b86a8;
+      flex-shrink: 0;
+    }
+    .file-name {
+      color: #00dfb6;
+      font-weight: 600;
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: inline-block;
+      vertical-align: bottom;
+    }
+
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .zoom-controls {
+      display: flex;
+      align-items: center;
+      background: #142742;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+    .btn-zoom {
+      background: transparent;
+      border: none;
+      color: #b3cbe8;
+      width: 28px;
+      height: 26px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    .btn-zoom:hover {
+      background: #23426e;
+      color: #fff;
+    }
+    .btn-zoom:disabled {
+      color: #41556e;
+      cursor: not-allowed;
+      background: transparent;
+    }
+
+    /* 波形主容器 */
+    .waveform-scroll-container {
+      position: relative;
+      margin: 16px 16px 8px 16px;
+      height: 190px;
+      background: #0f284d;
+      border-radius: 8px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      flex-shrink: 0;
+      cursor: grab;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .waveform-scroll-container::-webkit-scrollbar {
+      display: none;
+    }
+    .waveform-scroll-container.is-dragging {
+      cursor: grabbing;
+    }
+
+    .waveform-inner-track {
+      position: relative;
+      height: 100%;
+      min-width: 100%;
+    }
+
+    canvas#waveformCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #segments-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* 基础句块样式 */
+    .sentence-block {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      background: rgba(0, 223, 182, 0.05);
+      border-left: 2px solid rgba(0, 223, 182, 0.4);
+      border-right: 2px solid rgba(0, 223, 182, 0.4);
+      pointer-events: auto;
+      cursor: pointer;
+      transition: background 0.15s, border 0.15s, box-shadow 0.15s;
+    }
+    .sentence-block:hover {
+      background: rgba(0, 223, 182, 0.15);
+    }
+
+    /* 显眼的持久高亮选中状态样式 */
+    .sentence-block.selected {
+      background: rgba(0, 223, 182, 0.38) !important;
+      border-left: 3px solid #00ffcc !important;
+      border-right: 3px solid #00ffcc !important;
+      border-top: 1px solid rgba(0, 255, 204, 0.6);
+      border-bottom: 1px solid rgba(0, 255, 204, 0.6);
+      box-shadow: inset 0 0 14px rgba(0, 255, 204, 0.45);
+      z-index: 8;
+    }
+
+    .time-badge {
+      position: absolute;
+      top: 8px;
+      background: #ffffff;
+      color: #000000;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 10px;
+      transform: translateX(-50%);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .time-badge::after {
+      content: "";
+      position: absolute;
+      bottom: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 4px 4px 0;
+      border-style: solid;
+      border-color: #ffffff transparent transparent;
+    }
+
+    #playhead {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #ffffff;
+      z-index: 20;
+      display: none;
+      pointer-events: none;
+    }
+
+    /* 波纹与列表之间的操作栏（合并等功能） */
+    .action-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+    .action-tip {
+      font-size: 12px;
+      color: #6982a0;
+    }
+    .btn-merge {
+      background: #17365d;
+      color: #607d9f;
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 6px 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: not-allowed;
+      transition: all 0.2s;
+    }
+    .btn-merge.active {
+      background: #00dfb6;
+      color: #03221b;
+      border-color: #00dfb6;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 223, 182, 0.3);
+    }
+    .btn-merge.active:hover {
+      background: #05f0c4;
+    }
+
+    /* 句子列表容器 */
+    .results-container {
+      margin: 0 16px 16px 16px;
+      background: #0a1728;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.06);
+      height: 373px;
+      overflow-y: auto;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      flex-shrink: 0;
+    }
+    .results-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    .results-table th, .results-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      white-space: nowrap;
+    }
+    .results-table th {
+      color: #6a82a0;
+      background: #081220;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      font-weight: 600;
+    }
+    .results-table tr.selected td {
+      background: rgba(0, 223, 182, 0.12);
+    }
+    .results-table tr:hover td {
+      background: rgba(0, 223, 182, 0.05);
+    }
+    .btn-action {
+      background: #00dfb6;
+      color: #03221b;
+      border: none;
+      padding: 4px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    /* 底部控制器 */
+    .controls-bar {
+      margin-top: auto;
+      height: 70px;
+      background: #09131f;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      flex-shrink: 0;
+    }
+    .btn-play {
+      background: #19355e;
+      border: none;
+      color: #fff;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      transition: 0.2s;
+    }
+    .sentence-stats {
+      font-size: 13px;
+      color: #9cb3ce;
+    }
+    .btn-reset {
+      background: transparent;
+      border: 1px solid #365075;
+      color: #b0c7e2;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    /* 开发者弹窗 */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(3px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-backdrop.show {
+      display: flex;
+    }
+    .modal-card {
+      background: #0b1828;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      width: 100%;
+      max-width: 620px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.6);
+    }
+    .modal-header {
+      padding: 14px 20px;
+      background: #09131f;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .modal-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #00dfb6;
+    }
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: #8fa0b5;
+      font-size: 20px;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .modal-body {
+      padding: 16px 20px;
+      position: relative;
+    }
+    .code-preview {
+      background: #050b12;
+      color: #a6e22e;
+      padding: 16px;
+      border-radius: 6px;
+      font-family: Consolas, Monaco, "Courier New", Courier, monospace;
+      font-size: 12.5px;
+      line-height: 1.6;
+      white-space: pre;
+      overflow: auto;
+      max-height: 380px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      user-select: text;
+    }
+    .modal-footer {
+      padding: 12px 20px;
+      background: #09131f;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .btn-copy {
+      background: #0066ff;
+      color: #fff;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-copy:hover { background: #0052cc; }
+
+    #file-input { display: none; }
+
+    @media (max-width: 600px) {
+      .upload-title { font-size: 26px; }
+      .upload-subtitle { font-size: 14px; }
+      .waveform-scroll-container {
+        margin: 10px 10px 6px 10px;
+        height: 160px;
+      }
+      .action-toolbar {
+        padding: 0 10px;
+      }
+      .results-container {
+        margin: 0 10px 10px 10px;
+      }
+      .controls-bar {
+        padding: 0 12px;
+      }
+      .file-name {
+        max-width: 100px;
+      }
+      .logo span:last-child {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 顶部 Header -->
+  <header>
+    <div class="logo">
+      <span>自由的茄茄工具箱</span>
+      <span style="font-weight:300; margin-left: 10px; color:#5b718c;">音频逐句拆分器</span>
+    </div>
+    <button class="btn-developer" id="btn-open-dev">我是开发者</button>
+  </header>
+
+  <!-- 视图1：上传页面 -->
+  <div id="upload-view">
+    <h1 class="upload-title">自由的茄茄工具箱</h1>
+    <p class="upload-subtitle">智能识别音频波纹，自动按句切割并标注起止时间</p>
+
+    <input type="file" id="file-input" accept="audio/*">
+    <button class="btn-choose-file" onclick="document.getElementById('file-input').click()">
+      选择文件
+    </button>
+    <div class="drop-hint">或将音频拖放至此 (支持 MP3, WAV, AAC, M4A 等)</div>
+  </div>
+
+  <!-- 视图2：波形及断句页面 -->
+  <div id="editor-view">
+    <div class="editor-toolbar">
+      <div>音频: <span id="lbl-filename" class="file-name">--</span></div>
+      
+      <div class="toolbar-right">
+        <div id="lbl-duration">00:00.0</div>
+        <div class="zoom-controls">
+          <button class="btn-zoom" id="btn-zoom-in" title="放大波形">+</button>
+          <button class="btn-zoom" id="btn-zoom-out" title="缩小波形" disabled>-</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 可拖动滚动的波形主容器 -->
+    <div class="waveform-scroll-container" id="waveformScrollContainer">
+      <div class="waveform-inner-track" id="waveformInnerTrack">
+        <canvas id="waveformCanvas"></canvas>
+        <div id="segments-overlay"></div>
+        <div id="playhead"></div>
+      </div>
+    </div>
+
+    <!-- 新增：波纹与列表之间的操作功能栏 -->
+    <div class="action-toolbar">
+      <div class="action-tip" id="action-tip">提示：按住 Shift 可连续多选波段</div>
+      <button class="btn-merge" id="btn-merge" disabled>合并选中波段 (0)</button>
+    </div>
+
+    <!-- 句子列表显示 -->
+    <div class="results-container">
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th>序号</th>
+            <th>开始时间</th>
+            <th>结束时间</th>
+            <th>时长</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="sentences-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- 底部控制栏 -->
+    <div class="controls-bar">
+      <button class="btn-play" id="btn-play" title="播放/暂停">▶</button>
+      <div class="sentence-stats" id="sentence-stats">分析中...</div>
+      <button class="btn-reset" onclick="resetAll()">重新上传</button>
+    </div>
+  </div>
+
+  <!-- 开发者代码弹窗 -->
+  <div class="modal-backdrop" id="dev-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">开发者配置代码 (trainingData)</div>
+        <button class="modal-close" id="btn-close-modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <pre class="code-preview" id="code-content">// 正在生成数据...</pre>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-copy" id="btn-copy-code">复制全部代码</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let audioContext = null;
+    let audioBuffer = null;
+    let currentSource = null;
+    let isPlaying = false;
+    let detectedSentences = [];
+
+    // 选中状态管理
+    let selectedIndices = new Set(); // 存储被选中的句子索引集合
+    let lastClickedIndex = null;     // 上一次单选的索引（用于Shift范围多选）
+
+    // 缩放状态管理
+    let zoomLevel = 1.0;
+    const MIN_ZOOM = 1.0;
+    const MAX_ZOOM = 8.0;
+    const ZOOM_STEP = 0.5;
+
+    const fileInput = document.getElementById('file-input');
+    const uploadView = document.getElementById('upload-view');
+    const editorView = document.getElementById('editor-view');
+    const canvas = document.getElementById('waveformCanvas');
+    const segmentsOverlay = document.getElementById('segments-overlay');
+    const playhead = document.getElementById('playhead');
+    const btnPlay = document.getElementById('btn-play');
+    
+    const scrollContainer = document.getElementById('waveformScrollContainer');
+    const innerTrack = document.getElementById('waveformInnerTrack');
+    const btnZoomIn = document.getElementById('btn-zoom-in');
+    const btnZoomOut = document.getElementById('btn-zoom-out');
+
+    const btnMerge = document.getElementById('btn-merge');
+    const actionTip = document.getElementById('action-tip');
+
+    // 开发者弹窗元素
+    const devModal = document.getElementById('dev-modal');
+    const btnOpenDev = document.getElementById('btn-open-dev');
+    const btnCloseModal = document.getElementById('btn-close-modal');
+    const codeContent = document.getElementById('code-content');
+    const btnCopyCode = document.getElementById('btn-copy-code');
+
+    window.addEventListener('dragover', (e) => e.preventDefault());
+    window.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) handleFile(e.target.files[0]);
+    });
+
+    function resetAll() {
+      if (currentSource) {
+        try { currentSource.stop(); } catch(e){}
+      }
+      isPlaying = false;
+      audioBuffer = null;
+      detectedSentences = [];
+      selectedIndices.clear();
+      lastClickedIndex = null;
+      zoomLevel = 1.0;
+      updateZoomUI();
+      uploadView.style.display = 'flex';
+      editorView.style.display = 'none';
+      fileInput.value = '';
+    }
+
+    async function handleFile(file) {
+      document.getElementById('lbl-filename').innerText = file.name;
+      uploadView.style.display = 'none';
+      editorView.style.display = 'flex';
+      document.getElementById('sentence-stats').innerText = "正在分析音频...";
+
+      const arrayBuffer = await file.arrayBuffer();
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+      document.getElementById('lbl-duration').innerText = `时长: ${formatTime(audioBuffer.duration)}`;
+      
+      analyzeAndSegmentAudio(audioBuffer);
+      updateZoomLayout();
+    }
+
+    function updateZoomUI() {
+      btnZoomOut.disabled = (zoomLevel <= MIN_ZOOM);
+      btnZoomIn.disabled = (zoomLevel >= MAX_ZOOM);
+    }
+
+    function updateZoomLayout() {
+      if (!audioBuffer) return;
+      const containerWidth = scrollContainer.clientWidth;
+      const targetWidth = Math.max(containerWidth, containerWidth * zoomLevel);
+      
+      innerTrack.style.width = `${targetWidth}px`;
+      drawWaveform(audioBuffer, targetWidth);
+      renderSegmentsOverlay();
+      updateZoomUI();
+    }
+
+    btnZoomIn.addEventListener('click', () => {
+      if (zoomLevel < MAX_ZOOM) {
+        zoomLevel = Math.min(MAX_ZOOM, zoomLevel + ZOOM_STEP);
+        updateZoomLayout();
+      }
+    });
+
+    btnZoomOut.addEventListener('click', () => {
+      if (zoomLevel > MIN_ZOOM) {
+        zoomLevel = Math.max(MIN_ZOOM, zoomLevel - ZOOM_STEP);
+        updateZoomLayout();
+      }
+    });
+
+    // 拖动画布交互
+    let isMouseDown = false;
+    let isDraggingTrack = false;
+    let startX = 0;
+    let scrollLeftStart = 0;
+
+    scrollContainer.addEventListener('mousedown', (e) => {
+      if (zoomLevel <= 1.0) return;
+      isMouseDown = true;
+      isDraggingTrack = false;
+      startX = e.pageX - scrollContainer.offsetLeft;
+      scrollLeftStart = scrollContainer.scrollLeft;
+    });
+
+    window.addEventListener('mouseup', () => {
+      isMouseDown = false;
+      scrollContainer.classList.remove('is-dragging');
+    });
+
+    scrollContainer.addEventListener('mousemove', (e) => {
+      if (!isMouseDown) return;
+      const x = e.pageX - scrollContainer.offsetLeft;
+      const walk = (x - startX);
+      if (Math.abs(walk) > 5) {
+        isDraggingTrack = true;
+        scrollContainer.classList.add('is-dragging');
+        scrollContainer.scrollLeft = scrollLeftStart - walk;
+      }
+    });
+
+    let touchStartX = 0;
+    let touchScrollStart = 0;
+    scrollContainer.addEventListener('touchstart', (e) => {
+      if (zoomLevel <= 1.0) return;
+      touchStartX = e.touches[0].pageX;
+      touchScrollStart = scrollContainer.scrollLeft;
+    }, { passive: true });
+
+    scrollContainer.addEventListener('touchmove', (e) => {
+      if (zoomLevel <= 1.0) return;
+      const touchX = e.touches[0].pageX;
+      const walk = (touchX - touchStartX);
+      scrollContainer.scrollLeft = touchScrollStart - walk;
+    }, { passive: true });
+
+    // 断句核心
+    function analyzeAndSegmentAudio(buffer) {
+      const channelData = buffer.getChannelData(0);
+      const sampleRate = buffer.sampleRate;
+      
+      const frameDuration = 0.03;
+      const frameSize = Math.floor(sampleRate * frameDuration);
+      const totalFrames = Math.floor(channelData.length / frameSize);
+      const energies = new Float32Array(totalFrames);
+
+      let maxRms = 0;
+      for (let i = 0; i < totalFrames; i++) {
+        let sum = 0;
+        const offset = i * frameSize;
+        for (let j = 0; j < frameSize; j++) {
+          const val = channelData[offset + j];
+          sum += val * val;
+        }
+        const rms = Math.sqrt(sum / frameSize);
+        energies[i] = rms;
+        if (rms > maxRms) maxRms = rms;
+      }
+
+      const threshold = Math.max(0.015, maxRms * 0.08);
+
+      let rawSegments = [];
+      let inSpeech = false;
+      let startFrame = 0;
+
+      for (let i = 0; i < totalFrames; i++) {
+        const isVoice = energies[i] > threshold;
+        if (isVoice && !inSpeech) {
+          inSpeech = true;
+          startFrame = i;
+        } else if (!isVoice && inSpeech) {
+          inSpeech = false;
+          rawSegments.push({
+            start: startFrame * frameDuration,
+            end: i * frameDuration
+          });
+        }
+      }
+      if (inSpeech) {
+        rawSegments.push({
+          start: startFrame * frameDuration,
+          end: totalFrames * frameDuration
+        });
+      }
+
+      rawSegments = rawSegments.filter(s => (s.end - s.start) >= 0.1);
+
+      const mergedSegments = [];
+      if (rawSegments.length > 0) {
+        let curr = { ...rawSegments[0] };
+        for (let i = 1; i < rawSegments.length; i++) {
+          const next = rawSegments[i];
+          const gap = next.start - curr.end;
+          if (gap < 0.5) {
+            curr.end = next.end;
+          } else {
+            mergedSegments.push(curr);
+            curr = { ...next };
+          }
+        }
+        mergedSegments.push(curr);
+      }
+
+      const paddedSegments = [];
+      const totalDuration = buffer.duration;
+
+      for (let i = 0; i < mergedSegments.length; i++) {
+        let segStart = mergedSegments[i].start - 0.5;
+        let segEnd = mergedSegments[i].end + 0.5;
+
+        if (segStart < 0) segStart = 0;
+        if (segEnd > totalDuration) segEnd = totalDuration;
+
+        if (i > 0) {
+          const prevEnd = paddedSegments[i - 1].end;
+          if (segStart < prevEnd) {
+            const mid = (mergedSegments[i - 1].end + mergedSegments[i].start) / 2;
+            paddedSegments[i - 1].end = mid;
+            segStart = mid;
+          }
+        }
+
+        paddedSegments.push({
+          id: i + 1,
+          start: segStart,
+          end: segEnd
+        });
+      }
+
+      detectedSentences = paddedSegments;
+      refreshStats();
+    }
+
+    function refreshStats() {
+      document.getElementById('sentence-stats').innerText = `包含 ${detectedSentences.length} 个句子`;
+      updateMergeButtonState();
+    }
+
+    // 绘制波形
+    function drawWaveform(buffer, renderWidth) {
+      const dpr = window.devicePixelRatio || 1;
+      const height = scrollContainer.clientHeight;
+
+      canvas.width = renderWidth * dpr;
+      canvas.height = height * dpr;
+
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+
+      const centerY = height / 2;
+      ctx.clearRect(0, 0, renderWidth, height);
+
+      ctx.strokeStyle = '#00e6a8';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, centerY);
+      ctx.lineTo(renderWidth, centerY);
+      ctx.stroke();
+
+      const channelData = buffer.getChannelData(0);
+      const step = Math.ceil(channelData.length / renderWidth);
+      const amp = height / 2.2;
+
+      ctx.fillStyle = '#00dfb6';
+      for (let x = 0; x < renderWidth; x++) {
+        let min = 1.0;
+        let max = -1.0;
+        const start = x * step;
+        for (let j = 0; j < step; j++) {
+          const datum = channelData[start + j];
+          if (datum < min) min = datum;
+          if (datum > max) max = datum;
+        }
+        const yTop = centerY + min * amp;
+        const yBottom = centerY + max * amp;
+        ctx.fillRect(x, yTop, 1, Math.max(1, yBottom - yTop));
+      }
+    }
+
+    /* =======================================================
+       波段选中、高亮及Shift连续多选交互
+       ======================================================= */
+    function handleSegmentClick(index, event) {
+      // 若处于拖拽滚动状态，不触发点击
+      if (isDraggingTrack) return;
+
+      const isShift = event.shiftKey;
+
+      if (isShift && lastClickedIndex !== null) {
+        // Shift 连选：选中两者之间所有波段，且不播放声音
+        selectedIndices.clear();
+        const minIdx = Math.min(lastClickedIndex, index);
+        const maxIdx = Math.max(lastClickedIndex, index);
+        for (let i = minIdx; i <= maxIdx; i++) {
+          selectedIndices.add(i);
+        }
+      } else {
+        // 单选：只保留当前这一段并播放
+        selectedIndices.clear();
+        selectedIndices.add(index);
+        lastClickedIndex = index;
+        
+        // 播放该段
+        playSegment(detectedSentences[index].start, detectedSentences[index].end);
+      }
+
+      updateSelectionUI();
+      updateMergeButtonState();
+    }
+
+    // 单击空白处取消选中
+    document.addEventListener('click', (e) => {
+      // 如果点击在波形句块、合并按钮、表格内部，则不清除
+      if (e.target.closest('.sentence-block') || 
+          e.target.closest('#btn-merge') || 
+          e.target.closest('.results-table') || 
+          e.target.closest('.btn-developer') || 
+          e.target.closest('.modal-card')) {
+        return;
+      }
+      if (selectedIndices.size > 0) {
+        selectedIndices.clear();
+        lastClickedIndex = null;
+        updateSelectionUI();
+        updateMergeButtonState();
+      }
+    });
+
+    function updateSelectionUI() {
+      // 同步覆盖层各句块的选中样式
+      const blocks = segmentsOverlay.querySelectorAll('.sentence-block');
+      blocks.forEach((b, idx) => {
+        if (selectedIndices.has(idx)) {
+          b.classList.add('selected');
+        } else {
+          b.classList.remove('selected');
+        }
+      });
+
+      // 同步下方列表行的选中样式
+      const rows = document.querySelectorAll('#sentences-tbody tr');
+      rows.forEach((r, idx) => {
+        if (selectedIndices.has(idx)) {
+          r.classList.add('selected');
+        } else {
+          r.classList.remove('selected');
+        }
+      });
+    }
+
+    function updateMergeButtonState() {
+      const count = selectedIndices.size;
+      btnMerge.innerText = `合并选中波段 (${count})`;
+      if (count >= 2) {
+        btnMerge.classList.add('active');
+        btnMerge.disabled = false;
+        actionTip.innerText = `已选中 ${count} 个波段，可点击右侧按钮合并`;
+      } else {
+        btnMerge.classList.remove('active');
+        btnMerge.disabled = true;
+        actionTip.innerText = `提示：按住 Shift 可连续多选波段`;
+      }
+    }
+
+    /* =======================================================
+       合并波段核心操作
+       ======================================================= */
+    btnMerge.addEventListener('click', () => {
+      if (selectedIndices.size < 2) return;
+
+      const sortedIndices = Array.from(selectedIndices).sort((a, b) => a - b);
+      const firstIdx = sortedIndices[0];
+      const lastIdx = sortedIndices[sortedIndices.length - 1];
+
+      // 新合并波段的起始与结束时间
+      const mergedStart = detectedSentences[firstIdx].start;
+      const mergedEnd = detectedSentences[lastIdx].end;
+
+      const newSegment = {
+        id: firstIdx + 1,
+        start: mergedStart,
+        end: mergedEnd
+      };
+
+      // 替换原有的多个元素为一个新元素
+      detectedSentences.splice(firstIdx, (lastIdx - firstIdx + 1), newSegment);
+
+      // 重新为所有句子分配 id (1, 2, 3...)
+      detectedSentences.forEach((seg, i) => {
+        seg.id = i + 1;
+      });
+
+      // 默认选中新合并出的这一段
+      selectedIndices.clear();
+      selectedIndices.add(firstIdx);
+      lastClickedIndex = firstIdx;
+
+      // 重新渲染波纹标签与表格列表
+      renderSegmentsOverlay();
+      refreshStats();
+
+      // 播放合并后的完整波段
+      playSegment(mergedStart, mergedEnd);
+    });
+
+    /* =======================================================
+       渲染覆盖标签与列表
+       ======================================================= */
+    function renderSegmentsOverlay() {
+      segmentsOverlay.innerHTML = '';
+      const tbody = document.getElementById('sentences-tbody');
+      tbody.innerHTML = '';
+
+      const totalDuration = audioBuffer.duration;
+
+      detectedSentences.forEach((seg, index) => {
+        const leftPercent = (seg.start / totalDuration) * 100;
+        const rightPercent = (seg.end / totalDuration) * 100;
+        const widthPercent = rightPercent - leftPercent;
+
+        // 句块
+        const block = document.createElement('div');
+        block.className = 'sentence-block';
+        if (selectedIndices.has(index)) {
+          block.classList.add('selected');
+        }
+        block.style.left = `${leftPercent}%`;
+        block.style.width = `${widthPercent}%`;
+        block.title = `第 ${seg.id} 句 (Shift多选 / 单击播放)`;
+
+        // 点击事件：支持多选与单选持久高亮
+        block.addEventListener('click', (e) => {
+          handleSegmentClick(index, e);
+        });
+
+        // 起止时间气泡（只在该波段的左右两侧显示）
+        const badgeStart = document.createElement('div');
+        badgeStart.className = 'time-badge';
+        badgeStart.innerText = formatTime(seg.start);
+        badgeStart.style.left = `${leftPercent}%`;
+
+        const badgeEnd = document.createElement('div');
+        badgeEnd.className = 'time-badge';
+        badgeEnd.innerText = formatTime(seg.end);
+        badgeEnd.style.left = `${rightPercent}%`;
+
+        segmentsOverlay.appendChild(block);
+        segmentsOverlay.appendChild(badgeStart);
+        segmentsOverlay.appendChild(badgeEnd);
+
+        // 表格单行
+        const tr = document.createElement('tr');
+        if (selectedIndices.has(index)) {
+          tr.classList.add('selected');
+        }
+        tr.innerHTML = `
+          <td><strong>句 ${seg.id}</strong></td>
+          <td>${formatTime(seg.start)}</td>
+          <td>${formatTime(seg.end)}</td>
+          <td>${(seg.end - seg.start).toFixed(1)}s</td>
+          <td><button class="btn-action" onclick="handleRowPlay(${index})">播放</button></td>
+        `;
+        // 点击列表行也支持单选联动
+        tr.addEventListener('click', (e) => {
+          if (e.target.tagName !== 'BUTTON') {
+            handleSegmentClick(index, e);
+          }
+        });
+
+        tbody.appendChild(tr);
+      });
+
+      updateMergeButtonState();
+    }
+
+    // 表格中的播放按钮单独触发
+    window.handleRowPlay = function(index) {
+      selectedIndices.clear();
+      selectedIndices.add(index);
+      lastClickedIndex = index;
+      updateSelectionUI();
+      updateMergeButtonState();
+      playSegment(detectedSentences[index].start, detectedSentences[index].end);
+    };
+
+    /* =======================================================
+       音频播放控制
+       ======================================================= */
+    function playSegment(start, end) {
+      if (currentSource) {
+        try { currentSource.stop(); } catch(e){}
+      }
+      playhead.style.display = 'block';
+
+      currentSource = audioContext.createBufferSource();
+      currentSource.buffer = audioBuffer;
+      currentSource.connect(audioContext.destination);
+
+      const duration = end - start;
+      currentSource.start(0, start, duration);
+      isPlaying = true;
+      btnPlay.innerText = '❚❚';
+
+      const playStartTime = audioContext.currentTime;
+      function trackPlayhead() {
+        if (!isPlaying) return;
+        const elapsed = audioContext.currentTime - playStartTime;
+        const curr = start + elapsed;
+        if (curr >= end) {
+          playhead.style.display = 'none';
+          isPlaying = false;
+          btnPlay.innerText = '▶';
+          return;
+        }
+        const pct = (curr / audioBuffer.duration) * 100;
+        playhead.style.left = `${pct}%`;
+
+        const innerWidth = innerTrack.clientWidth;
+        const currentPixel = (pct / 100) * innerWidth;
+        const viewLeft = scrollContainer.scrollLeft;
+        const viewRight = viewLeft + scrollContainer.clientWidth;
+        if (currentPixel < viewLeft || currentPixel > viewRight) {
+          scrollContainer.scrollLeft = currentPixel - 50;
+        }
+
+        requestAnimationFrame(trackPlayhead);
+      }
+      requestAnimationFrame(trackPlayhead);
+
+      currentSource.onended = () => {
+        isPlaying = false;
+        btnPlay.innerText = '▶';
+        playhead.style.display = 'none';
+      };
+    }
+
+    btnPlay.onclick = () => {
+      if (isPlaying) {
+        if (currentSource) currentSource.stop();
+        isPlaying = false;
+        btnPlay.innerText = '▶';
+      } else {
+        playSegment(0, audioBuffer.duration);
+      }
+    };
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = (seconds % 60).toFixed(1);
+      const mStr = mins < 10 ? '0' + mins : mins;
+      const sStr = secs < 10 ? '0' + secs : secs;
+      return `${mStr}:${sStr}`;
+    }
+
+    function formatDevTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const remainSecs = seconds % 60;
+      const secs = Math.floor(remainSecs);
+      const ms = Math.floor((remainSecs - secs) * 1000);
+
+      const sStr = secs < 10 ? '0' + secs : secs;
+      const msStr = ms.toString().padStart(3, '0');
+      return `${mins}:${sStr}.${msStr}`;
+    }
+
+    /* =======================================================
+       开发者代码弹窗（自动跟随合并后的数据生成）
+       ======================================================= */
+    btnOpenDev.addEventListener('click', () => {
+      if (!audioBuffer || detectedSentences.length === 0) {
+        codeContent.innerText = `// 请先上传音频，系统将自动生成切割配置代码。`;
+      } else {
+        const lines = detectedSentences.map((seg, idx) => {
+          const paddedNum = (idx + 1).toString().padStart(2, '0');
+          const startStr = formatDevTime(seg.start);
+          const endStr = formatDevTime(seg.end);
+          return `        { id: ${seg.id}, start: "${startStr}", end: "${endStr}", sentence: "Sentence${paddedNum}" }`;
+        });
+
+        const fullCode = 
+`const trainingData = {
+    '1': [
+${lines.join(',\n')}
+    ]
+};`;
+        codeContent.innerText = fullCode;
+      }
+
+      devModal.classList.add('show');
+    });
+
+    btnCloseModal.addEventListener('click', () => {
+      devModal.classList.remove('show');
+    });
+
+    devModal.addEventListener('click', (e) => {
+      if (e.target === devModal) {
+        devModal.classList.remove('show');
+      }
+    });
+
+    btnCopyCode.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(codeContent.innerText);
+        const originalText = btnCopyCode.innerText;
+        btnCopyCode.innerText = '已成功复制！';
+        btnCopyCode.style.background = '#27ae60';
+        setTimeout(() => {
+          btnCopyCode.innerText = originalText;
+          btnCopyCode.style.background = '#0066ff';
+        }, 1500);
+      } catch (err) {
+        alert('复制失败，请手动选中代码进行复制。');
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      if (audioBuffer) updateZoomLayout();
+    });
+  </script>
+</body>
+</html>
